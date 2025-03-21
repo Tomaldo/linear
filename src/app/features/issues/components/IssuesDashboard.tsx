@@ -27,6 +27,15 @@ import { IssueCard } from './IssueCard';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
+import { UI_TEXTS, STATUS_TRANSLATIONS, LABEL_TRANSLATIONS } from '../constants/translations';
+
+const PRIORITY_LABELS: { [key in IssuePriority]: string } = {
+  [IssuePriority.NoPriority]: UI_TEXTS.issues.priority.noPriority,
+  [IssuePriority.Low]: UI_TEXTS.issues.priority.low,
+  [IssuePriority.Medium]: UI_TEXTS.issues.priority.medium,
+  [IssuePriority.High]: UI_TEXTS.issues.priority.high,
+  [IssuePriority.Urgent]: UI_TEXTS.issues.priority.urgent,
+};
 
 export function IssuesDashboard() {
   const [issues, setIssues] = useState<IssueWithState[]>([]);
@@ -100,16 +109,6 @@ export function IssuesDashboard() {
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
   }, [issues, selectedStatus, selectedPriority, selectedLabel]);
-
-  const getPriorityLabel = (priority: IssuePriority): string => {
-    switch (priority) {
-      case IssuePriority.NoPriority: return 'No Priority';
-      case IssuePriority.Low: return 'Low';
-      case IssuePriority.Medium: return 'Medium';
-      case IssuePriority.High: return 'High';
-      default: return 'Unknown';
-    }
-  };
 
   const getPriorityColor = (priority: IssuePriority): string => {
     switch (priority) {
@@ -237,47 +236,47 @@ export function IssuesDashboard() {
             <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
               <Stack direction="row" spacing={2}>
                 <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>{UI_TEXTS.filters.status}</InputLabel>
                   <Select
                     value={selectedStatus}
-                    label="Status"
+                    label={UI_TEXTS.filters.status}
                     onChange={handleStatusChange}
                   >
-                    <MenuItem value="all">All Statuses</MenuItem>
+                    <MenuItem value="all">{UI_TEXTS.filters.allStatuses}</MenuItem>
                     {statuses.map(status => (
                       <MenuItem key={status.id} value={status.id}>
-                        {status.name}
+                        {STATUS_TRANSLATIONS[status.name] || status.name}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
 
                 <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Priority</InputLabel>
+                  <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
                   <Select
                     value={selectedPriority}
-                    label="Priority"
+                    label={UI_TEXTS.filters.priority}
                     onChange={handlePriorityChange}
                   >
-                    <MenuItem value="all">All Priorities</MenuItem>
+                    <MenuItem value="all">{UI_TEXTS.filters.allPriorities}</MenuItem>
                     {Object.values(IssuePriority)
                       .filter(p => typeof p === 'number')
                       .map(priority => (
                         <MenuItem key={priority} value={priority.toString()}>
-                          {getPriorityLabel(priority as IssuePriority)}
+                          {PRIORITY_LABELS[priority as IssuePriority]}
                         </MenuItem>
                       ))}
                   </Select>
                 </FormControl>
 
                 <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Label</InputLabel>
+                  <InputLabel>{UI_TEXTS.filters.label}</InputLabel>
                   <Select
                     value={selectedLabel}
-                    label="Label"
+                    label={UI_TEXTS.filters.label}
                     onChange={handleLabelChange}
                   >
-                    <MenuItem value="all">All Labels</MenuItem>
+                    <MenuItem value="all">{UI_TEXTS.filters.allLabels}</MenuItem>
                     {availableLabels.map(label => (
                       <MenuItem key={label.id} value={label.id}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -290,7 +289,7 @@ export function IssuesDashboard() {
                               mr: 1
                             }} 
                           />
-                          {label.name}
+                          {LABEL_TRANSLATIONS[label.name] || label.name}
                         </Box>
                       </MenuItem>
                     ))}
@@ -312,7 +311,7 @@ export function IssuesDashboard() {
                       fetchIssues();
                     }}
                   >
-                    Retry
+                    {UI_TEXTS.errors.retry}
                   </Button>
                 }
               >
@@ -333,7 +332,7 @@ export function IssuesDashboard() {
                     ))
                   ) : (
                     <Typography color="text.secondary" align="center">
-                      No issues found matching the selected filters.
+                      {UI_TEXTS.issues.noIssuesFound}
                     </Typography>
                   )}
                 </Stack>
@@ -357,7 +356,7 @@ export function IssuesDashboard() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Create Issue</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>{UI_TEXTS.issues.createIssue}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isLoading} />

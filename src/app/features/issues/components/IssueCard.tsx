@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Paper, Stack, Typography, Chip, Button } from '@mui/material';
-import { IssueWithState, IssuePriority, PRIORITY_LABELS } from '@/app/features/issues/types';
+import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
+import { PRIORITY_LABELS, UI_TEXTS, STATUS_TRANSLATIONS, LABEL_TRANSLATIONS } from '../constants/translations';
 
 interface IssueCardProps {
   issue: IssueWithState;
@@ -26,21 +27,6 @@ export function IssueCard({ issue }: IssueCardProps) {
         return '#10B981'; // Green
       default:
         return '#6B7280'; // Gray
-    }
-  };
-
-  const getPriorityLabel = (priority: IssuePriority): string => {
-    switch (priority) {
-      case IssuePriority.Urgent:
-        return 'Urgent';
-      case IssuePriority.High:
-        return 'High';
-      case IssuePriority.Medium:
-        return 'Medium';
-      case IssuePriority.Low:
-        return 'Low';
-      default:
-        return 'No Priority';
     }
   };
 
@@ -71,7 +57,7 @@ export function IssueCard({ issue }: IssueCardProps) {
                   onClick={() => setIsExpanded(!isExpanded)}
                   sx={{ alignSelf: 'flex-start' }}
                 >
-                  {isExpanded ? 'Show Less' : 'Show More'}
+                  {isExpanded ? UI_TEXTS.issues.showLess : UI_TEXTS.issues.showMore}
                 </Button>
               )}
             </>
@@ -80,7 +66,7 @@ export function IssueCard({ issue }: IssueCardProps) {
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
             {issue.stateName && (
               <Chip
-                label={issue.stateName}
+                label={STATUS_TRANSLATIONS[issue.stateName] || issue.stateName}
                 size="small"
                 sx={{
                   backgroundColor: 'primary.main',
@@ -95,9 +81,9 @@ export function IssueCard({ issue }: IssueCardProps) {
                 label={PRIORITY_LABELS[issue.priority]}
                 size="small"
                 sx={{
-                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, // 10% opacity
+                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, 
                   color: getPriorityColor(issue.priority),
-                  borderColor: `${getPriorityColor(issue.priority)}40`, // 25% opacity
+                  borderColor: `${getPriorityColor(issue.priority)}40`, 
                   border: '1px solid',
                   fontWeight: 500
                 }}
@@ -117,12 +103,12 @@ export function IssueCard({ issue }: IssueCardProps) {
               {issue.labels.map(label => (
                 <Chip
                   key={label.id}
-                  label={label.name}
+                  label={LABEL_TRANSLATIONS[label.name] || label.name}
                   size="small"
                   sx={{
-                    backgroundColor: `${label.color}1A`, // 10% opacity
+                    backgroundColor: `${label.color}1A`, 
                     color: label.color,
-                    borderColor: `${label.color}40`, // 25% opacity
+                    borderColor: `${label.color}40`, 
                     border: '1px solid',
                     fontWeight: 500
                   }}
