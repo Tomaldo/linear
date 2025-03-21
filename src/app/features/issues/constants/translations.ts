@@ -56,10 +56,17 @@ export const UI_TEXTS = {
       high: 'Høy',
       medium: 'Medium',
       low: 'Lav'
+    },
+    form: {
+      title: 'Tittel',
+      description: 'Beskrivelse',
+      creating: 'Oppretter...',
+      create: 'Opprett sak'
     }
   },
   errors: {
     generic: 'En feil oppstod. Vennligst prøv igjen.',
-    retry: 'Prøv igjen'
+    retry: 'Prøv igjen',
+    required: 'Dette feltet er påkrevd'
   }
 };

@@ -1,9 +1,10 @@
 'use client';
 
-import { Box, FormControl, MenuItem, Select } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { IssuePriority } from '@/app/features/issues/types';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { UI_TEXTS } from '../constants/translations';
 
 interface PrioritySelectProps {
   value: IssuePriority;
@@ -11,43 +12,43 @@ interface PrioritySelectProps {
   disabled?: boolean;
 }
 
-const PRIORITY_LABELS: Record<IssuePriority, string> = {
-  [IssuePriority.NoPriority]: 'No Priority',
-  [IssuePriority.Urgent]: 'Urgent',
-  [IssuePriority.High]: 'High',
-  [IssuePriority.Medium]: 'Medium',
-  [IssuePriority.Low]: 'Low'
+const getPriorityIcon = (priority: IssuePriority) => {
+  if (priority === IssuePriority.NoPriority) {
+    return <RemoveIcon fontSize="small" />;
+  }
+  return (
+    <SignalCellularAltIcon 
+      fontSize="small" 
+      sx={{ 
+        opacity: (5 - priority) / 4, // Higher priority = higher opacity
+        transform: priority === IssuePriority.Urgent ? 'rotate(180deg)' : undefined 
+      }} 
+    />
+  );
 };
 
 export function PrioritySelect({ value, onChange, disabled }: PrioritySelectProps) {
-  const getPriorityIcon = (priority: IssuePriority) => {
-    if (priority === IssuePriority.NoPriority) {
-      return <RemoveIcon fontSize="small" />;
-    }
-    return (
-      <SignalCellularAltIcon 
-        fontSize="small" 
-        sx={{ 
-          opacity: (5 - priority) / 4, // Higher priority = higher opacity
-          transform: priority === IssuePriority.Urgent ? 'rotate(180deg)' : undefined 
-        }} 
-      />
-    );
-  };
+  const priorityOptions = [
+    { value: IssuePriority.NoPriority, label: UI_TEXTS.issues.priority.noPriority },
+    { value: IssuePriority.Low, label: UI_TEXTS.issues.priority.low },
+    { value: IssuePriority.Medium, label: UI_TEXTS.issues.priority.medium },
+    { value: IssuePriority.High, label: UI_TEXTS.issues.priority.high },
+    { value: IssuePriority.Urgent, label: UI_TEXTS.issues.priority.urgent }
+  ];
 
   return (
     <FormControl fullWidth disabled={disabled}>
+      <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
       <Select
-        value={value.toString()}
-        onChange={(e) => onChange(Number(e.target.value) as IssuePriority)}
-        size="medium"
-        displayEmpty
+        value={value}
+        label={UI_TEXTS.filters.priority}
+        onChange={(e) => onChange(e.target.value as IssuePriority)}
       >
-        {Object.entries(PRIORITY_LABELS).map(([priority, label]) => (
-          <MenuItem key={priority} value={priority}>
+        {priorityOptions.map(option => (
+          <MenuItem key={option.value} value={option.value}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {getPriorityIcon(Number(priority) as IssuePriority)}
-              {label}
+              {getPriorityIcon(option.value)}
+              {option.label}
             </Box>
           </MenuItem>
         ))}

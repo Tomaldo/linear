@@ -1,63 +1,53 @@
 'use client';
 
-import { Box, Button, Stack } from '@mui/material';
-import { FormTextField } from '@/app/components/common/FormTextField';
 import { useForm, Controller } from 'react-hook-form';
+import { Box, Button, Stack, FormControl } from '@mui/material';
 import { IssuePriority } from '@/app/features/issues/types';
 import { PrioritySelect } from '@/app/features/issues/components/PrioritySelect';
+import { UI_TEXTS } from '../constants/translations';
+import { FormTextField } from '@/app/components/FormTextField';
 
 interface CreateIssueFormProps {
   onSubmit: (data: { title: string; description: string; priority: IssuePriority }) => Promise<void>;
-  isLoading?: boolean;
-}
-
-interface FormData {
-  title: string;
-  description: string;
-  priority: IssuePriority;
+  isLoading: boolean;
 }
 
 export function CreateIssueForm({ onSubmit, isLoading }: CreateIssueFormProps) {
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormData>({
+  const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       title: '',
       description: '',
       priority: IssuePriority.NoPriority
-    },
-    mode: 'onChange'
+    }
   });
 
-  const onFormSubmit = async (data: FormData) => {
+  const onSubmitForm = async (data: { title: string; description: string; priority: IssuePriority }) => {
     try {
-      await onSubmit({
-        ...data,
-        priority: Number(data.priority) as IssuePriority
-      });
+      await onSubmit(data);
       reset();
     } catch (error) {
-      console.error('Failed to create issue:', error);
+      console.error('Error creating issue:', error);
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onFormSubmit)} noValidate>
+    <Box component="form" onSubmit={handleSubmit(onSubmitForm)}>
       <Stack spacing={3}>
         <Controller
           name="title"
           control={control}
-          rules={{ required: 'Title is required' }}
-          defaultValue=""
+          rules={{ required: UI_TEXTS.errors.required }}
           render={({ field, fieldState: { error } }) => (
             <FormTextField
               {...field}
-              label="Title"
+              label={UI_TEXTS.issues.form.title}
               required
               error={!!error}
               helperText={error?.message}
               disabled={isLoading}
               fullWidth
               inputProps={{
-                'aria-label': 'Title'
+                'aria-label': UI_TEXTS.issues.form.title
               }}
             />
           )}
@@ -66,11 +56,10 @@ export function CreateIssueForm({ onSubmit, isLoading }: CreateIssueFormProps) {
         <Controller
           name="description"
           control={control}
-          defaultValue=""
           render={({ field }) => (
             <FormTextField
               {...field}
-              label="Description"
+              label={UI_TEXTS.issues.form.description}
               multiline
               rows={4}
               disabled={isLoading}
@@ -82,23 +71,24 @@ export function CreateIssueForm({ onSubmit, isLoading }: CreateIssueFormProps) {
         <Controller
           name="priority"
           control={control}
-          defaultValue={IssuePriority.NoPriority}
           render={({ field }) => (
-            <PrioritySelect
-              value={field.value}
-              onChange={field.onChange}
-              disabled={isLoading}
-            />
+            <FormControl fullWidth>
+              <PrioritySelect
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isLoading}
+              />
+            </FormControl>
           )}
         />
 
-        <Button 
-          type="submit" 
-          variant="contained" 
+        <Button
+          type="submit"
+          variant="contained"
           disabled={isLoading}
           sx={{ alignSelf: 'flex-start' }}
         >
-          {isLoading ? 'Creating...' : 'Create Issue'}
+          {isLoading ? UI_TEXTS.issues.form.creating : UI_TEXTS.issues.form.create}
         </Button>
       </Stack>
     </Box>
