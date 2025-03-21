@@ -79,32 +79,34 @@ export default function IssuesDashboard() {
       }
 
       // Create the issue
-      const createdIssue = await client.createIssue({
+      const result = await client.createIssue({
         teamId: team.id,
         title: `${ISSUE_AUTHOR} - ${data.title}`,
         description: data.description,
-        priority: data.priority
+        priority: Number(data.priority)
       });
 
-      if (!createdIssue) {
+      if (!result.success || !result.issue) {
         throw new Error('Failed to create issue');
       }
 
-      // Add the new issue to the list with its state
-      const state = await createdIssue.state;
+      // Get the issue's state
+      const issueData = await result.issue;
+      const issueState = await issueData.state;
       
-      if (!state) {
+      if (!issueState) {
         throw new Error('Failed to fetch issue state');
       }
 
+      // Add the new issue to the list
       setIssues(prev => [{
-        id: createdIssue.id,
-        title: createdIssue.title,
-        description: createdIssue.description ?? null,
-        stateId: state.id,
-        stateName: state.name,
+        id: issueData.id,
+        title: issueData.title,
+        description: issueData.description ?? null,
+        stateId: issueState.id,
+        stateName: issueState.name,
         labels: [],
-        priority: (createdIssue.priority ?? IssuePriority.NoPriority) as IssuePriority
+        priority: (issueData.priority ?? IssuePriority.NoPriority) as IssuePriority
       }, ...prev]);
 
     } catch (err) {

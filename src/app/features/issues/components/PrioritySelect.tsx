@@ -1,14 +1,13 @@
 'use client';
 
 import { Box, FormControl, MenuItem, Select } from '@mui/material';
-import { Control, Controller } from 'react-hook-form';
-import { IssuePriority } from '../types';
+import { IssuePriority } from '@/app/features/issues/types';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 interface PrioritySelectProps {
-  name: string;
-  control: Control<any>;
+  value: IssuePriority;
+  onChange: (value: IssuePriority) => void;
   disabled?: boolean;
 }
 
@@ -20,7 +19,7 @@ const PRIORITY_LABELS: Record<IssuePriority, string> = {
   [IssuePriority.Low]: 'Low'
 };
 
-export function PrioritySelect({ name, control, disabled }: PrioritySelectProps) {
+export function PrioritySelect({ value, onChange, disabled }: PrioritySelectProps) {
   const getPriorityIcon = (priority: IssuePriority) => {
     if (priority === IssuePriority.NoPriority) {
       return <RemoveIcon fontSize="small" />;
@@ -37,47 +36,22 @@ export function PrioritySelect({ name, control, disabled }: PrioritySelectProps)
   };
 
   return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field }) => (
-        <FormControl size="small">
-          <Select
-            {...field}
-            displayEmpty
-            disabled={disabled}
-            renderValue={(value) => (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {getPriorityIcon(value as IssuePriority)}
-                {PRIORITY_LABELS[value as IssuePriority]}
-              </Box>
-            )}
-            sx={{
-              minWidth: 200,
-              '& .MuiSelect-select': {
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }
-            }}
-          >
-            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-              <MenuItem 
-                key={value} 
-                value={value}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                {getPriorityIcon(Number(value) as IssuePriority)}
-                {label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      )}
-    />
+    <FormControl fullWidth disabled={disabled}>
+      <Select
+        value={value.toString()}
+        onChange={(e) => onChange(Number(e.target.value) as IssuePriority)}
+        size="medium"
+        displayEmpty
+      >
+        {Object.entries(PRIORITY_LABELS).map(([priority, label]) => (
+          <MenuItem key={priority} value={priority}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {getPriorityIcon(Number(priority) as IssuePriority)}
+              {label}
+            </Box>
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 }

@@ -2,6 +2,7 @@
 
 import { TextField, TextFieldProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import React from 'react';
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputLabel-root': {
@@ -30,20 +31,29 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-export const FormTextField = (props: TextFieldProps) => {
-  return (
-    <StyledTextField
-      variant="outlined"
-      size="medium"
-      {...props}
-      FormHelperTextProps={{
-        ...props.FormHelperTextProps,
-        sx: {
-          ...(props.error && {
-            color: 'error.main',
-          }),
-        },
-      }}
-    />
-  );
-};
+export const FormTextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
+  ({ onChange, onBlur, value, name, ...props }, ref) => {
+    return (
+      <StyledTextField
+        variant="outlined"
+        size="medium"
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        inputRef={ref}
+        {...props}
+        FormHelperTextProps={{
+          ...props.FormHelperTextProps,
+          sx: {
+            ...(props.error && {
+              color: 'error.main',
+            }),
+          },
+        }}
+      />
+    );
+  }
+);
+
+FormTextField.displayName = 'FormTextField';
