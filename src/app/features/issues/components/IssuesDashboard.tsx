@@ -1,7 +1,23 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Alert, Box, Container, Paper, Stack, Typography, Tabs, Tab, Button, CircularProgress } from '@mui/material';
+import { 
+  Alert, 
+  Box, 
+  Container, 
+  Paper, 
+  Stack, 
+  Typography, 
+  Tabs, 
+  Tab, 
+  Button, 
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Fab
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
@@ -49,6 +65,10 @@ export function IssuesDashboard() {
   const [statusTab, setStatusTab] = useState(0);
   const [priorityTab, setPriorityTab] = useState(0);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
+  const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
 
   const handleStatusTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setStatusTab(newValue);
@@ -163,14 +183,9 @@ export function IssuesDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchIssues();
-  }, []);
-
   const handleCreateIssue = async (data: { title: string; description: string; priority: IssuePriority }) => {
     setError(null);
     setIsLoading(true);
-
     try {
       const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
       const teamsResponse = await client.teams();
@@ -181,33 +196,15 @@ export function IssuesDashboard() {
         throw new Error('Team configuration error: No team found in Linear.');
       }
 
-      const result = await client.createIssue({
+      await client.createIssue({
         teamId: team.id,
         title: `${ISSUE_AUTHOR} - ${data.title}`,
         description: data.description,
-        priority: Number(data.priority)
+        priority: data.priority
       });
 
-      if (!result.success || !result.issue) {
-        throw new Error('Failed to create issue');
-      }
-
-      const issueData = await result.issue;
-      const issueState = await issueData.state;
-
-      if (!issueState) {
-        throw new Error('Failed to fetch issue state');
-      }
-
-      setIssues(prev => [{
-        id: issueData.id,
-        title: issueData.title,
-        description: issueData.description ?? null,
-        stateId: issueState.id,
-        stateName: issueState.name,
-        labels: [],
-        priority: issueData.priority as IssuePriority
-      }, ...prev]);
+      await fetchIssues();
+      handleCloseCreateDialog();
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? `Failed to create issue: ${err.message}`
@@ -218,6 +215,10 @@ export function IssuesDashboard() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchIssues();
+  }, []);
 
   const renderIssueCard = (issue: IssueWithState) => (
     <Paper 
@@ -328,17 +329,6 @@ export function IssuesDashboard() {
         <Paper 
           elevation={2}
           sx={{ 
-            p: 4,
-            borderRadius: 2
-          }}
-        >
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>Create Issue</Typography>
-          <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isLoading} />
-        </Paper>
-
-        <Paper 
-          elevation={2}
-          sx={{ 
             borderRadius: 2,
             overflow: 'hidden'
           }}
@@ -412,6 +402,28 @@ export function IssuesDashboard() {
           </Stack>
         </Paper>
       </Stack>
+
+      <Fab 
+        color="primary" 
+        sx={{ position: 'fixed', bottom: 32, right: 32 }}
+        onClick={handleOpenCreateDialog}
+      >
+        <AddIcon />
+      </Fab>
+
+      <Dialog 
+        open={isCreateDialogOpen} 
+        onClose={handleCloseCreateDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Create Issue</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isLoading} />
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }
