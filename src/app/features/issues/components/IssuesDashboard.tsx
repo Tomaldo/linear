@@ -8,15 +8,18 @@ import {
   Paper, 
   Stack, 
   Typography, 
-  Tabs, 
-  Tab, 
-  Button, 
-  CircularProgress,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   Fab,
-  Chip
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Button,
+  CircularProgress
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -24,103 +27,61 @@ import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sd
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`issue-tabpanel-${index}`}
-      aria-labelledby={`issue-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            {children}
-          </Stack>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-function a11yProps(index: number) {
-  return {
-    id: `issue-tab-${index}`,
-    'aria-controls': `issue-tabpanel-${index}`,
-  };
-}
-
 export function IssuesDashboard() {
   const [issues, setIssues] = useState<IssueWithState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [statusTab, setStatusTab] = useState(0);
-  const [priorityTab, setPriorityTab] = useState(0);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedPriority, setSelectedPriority] = useState<string>('all');
+  const [selectedLabel, setSelectedLabel] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
   const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
 
-  const handleStatusTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setStatusTab(newValue);
+  const handleStatusChange = (event: SelectChangeEvent) => {
+    setSelectedStatus(event.target.value);
   };
 
-  const handlePriorityTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setPriorityTab(newValue);
+  const handlePriorityChange = (event: SelectChangeEvent) => {
+    setSelectedPriority(event.target.value);
   };
 
-  const statusesWithIssues = useMemo(() => {
-    return statuses.filter(status => 
-      issues.some(issue => issue.stateId === status.id)
-    );
-  }, [issues, statuses]);
+  const handleLabelChange = (event: SelectChangeEvent) => {
+    setSelectedLabel(event.target.value);
+  };
 
-  const prioritiesWithIssues = useMemo(() => {
-    const priorities = new Set(issues.map(issue => issue.priority));
-    return [
-      IssuePriority.NoPriority,
-      IssuePriority.Low,
-      IssuePriority.Medium,
-      IssuePriority.High
-    ].filter(priority => priorities.has(priority));
+  const availableLabels = useMemo(() => {
+    const labelMap = new Map<string, IssueLabel>();
+    issues.forEach(issue => {
+      issue.labels.forEach(label => {
+        labelMap.set(label.id, label);
+      });
+    });
+    return Array.from(labelMap.values());
   }, [issues]);
-
-  // Reset tab selections if the selected tab no longer exists
-  useEffect(() => {
-    if (statusTab > 0 && statusTab > statusesWithIssues.length) {
-      setStatusTab(0);
-    }
-  }, [statusTab, statusesWithIssues.length]);
-
-  useEffect(() => {
-    if (priorityTab > 0 && priorityTab > prioritiesWithIssues.length) {
-      setPriorityTab(0);
-    }
-  }, [priorityTab, prioritiesWithIssues.length]);
 
   const filteredIssues = useMemo(() => {
     let filtered = [...issues];
 
     // Filter by status
-    if (statusTab !== 0) {
-      const status = statusesWithIssues[statusTab - 1];
-      filtered = status ? filtered.filter(issue => issue.stateId === status.id) : [];
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(issue => issue.stateId === selectedStatus);
     }
 
     // Filter by priority
-    if (priorityTab !== 0) {
-      const priority = prioritiesWithIssues[priorityTab - 1];
-      filtered = filtered.filter(issue => issue.priority === priority);
+    if (selectedPriority !== 'all') {
+      filtered = filtered.filter(issue => 
+        issue.priority === Number(selectedPriority) as IssuePriority
+      );
+    }
+
+    // Filter by label
+    if (selectedLabel !== 'all') {
+      filtered = filtered.filter(issue => 
+        issue.labels.some(label => label.id === selectedLabel)
+      );
     }
 
     // Sort by priority (Urgent -> High -> Medium -> Low -> No Priority)
@@ -137,7 +98,7 @@ export function IssuesDashboard() {
 
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
-  }, [issues, statusTab, priorityTab, statusesWithIssues, prioritiesWithIssues]);
+  }, [issues, selectedStatus, selectedPriority, selectedLabel]);
 
   const getPriorityLabel = (priority: IssuePriority): string => {
     switch (priority) {
@@ -336,45 +297,6 @@ export function IssuesDashboard() {
     </Paper>
   );
 
-  const renderTabContent = (issues: IssueWithState[], status?: { name: string }) => {
-    let priorityLabel: string | null = null;
-    if (priorityTab > 0) {
-      const priority = prioritiesWithIssues[priorityTab - 1];
-      priorityLabel = getPriorityLabel(priority);
-    }
-
-    const statusLabel = status?.name;
-    
-    let emptyMessage = 'No issues found';
-    if (statusLabel && priorityLabel) {
-      emptyMessage = `No ${priorityLabel} priority issues in ${statusLabel}`;
-    } else if (statusLabel) {
-      emptyMessage = `No issues found in ${statusLabel}`;
-    } else if (priorityLabel) {
-      emptyMessage = `No ${priorityLabel} priority issues found`;
-    }
-
-    return (
-      <Stack spacing={3} sx={{ p: 3 }}>
-        {issues.length === 0 ? (
-          <Paper 
-            sx={{ 
-              p: 3, 
-              textAlign: 'center',
-              bgcolor: 'grey.50'
-            }}
-          >
-            <Typography color="text.secondary">
-              {emptyMessage}
-            </Typography>
-          </Paper>
-        ) : (
-          issues.map(renderIssueCard)
-        )}
-      </Stack>
-    );
-  };
-
   const LoadingSpinner = ({ minHeight = 200 }: { minHeight?: number | string }) => (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight={minHeight}>
       <CircularProgress />
@@ -392,54 +314,84 @@ export function IssuesDashboard() {
           }}
         >
           <Stack>
-            {statusesWithIssues.length > 0 && (
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-                <Tabs 
-                  value={statusTab} 
-                  onChange={handleStatusTabChange}
-                  sx={{
-                    px: 2,
-                    pt: 2
-                  }}
-                >
-                  <Tab label="All Statuses" />
-                  {statusesWithIssues.map((status, index) => (
-                    <Tab key={status.id} label={status.name} />
-                  ))}
-                </Tabs>
-              </Box>
-            )}
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+              <Stack direction="row" spacing={2}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={selectedStatus}
+                    label="Status"
+                    onChange={handleStatusChange}
+                  >
+                    <MenuItem value="all">All Statuses</MenuItem>
+                    {statuses.map(status => (
+                      <MenuItem key={status.id} value={status.id}>
+                        {status.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-            {prioritiesWithIssues.length > 0 && (
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-                <Tabs 
-                  value={priorityTab} 
-                  onChange={handlePriorityTabChange}
-                  sx={{
-                    px: 2,
-                    pt: 2
-                  }}
-                >
-                  <Tab label="All Priorities" />
-                  {prioritiesWithIssues.map((priority) => (
-                    <Tab 
-                      key={priority} 
-                      label={getPriorityLabel(priority)} 
-                    />
-                  ))}
-                </Tabs>
-              </Box>
-            )}
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    value={selectedPriority}
+                    label="Priority"
+                    onChange={handlePriorityChange}
+                  >
+                    <MenuItem value="all">All Priorities</MenuItem>
+                    {Object.values(IssuePriority)
+                      .filter(p => typeof p === 'number')
+                      .map(priority => (
+                        <MenuItem key={priority} value={priority.toString()}>
+                          {getPriorityLabel(priority as IssuePriority)}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Label</InputLabel>
+                  <Select
+                    value={selectedLabel}
+                    label="Label"
+                    onChange={handleLabelChange}
+                  >
+                    <MenuItem value="all">All Labels</MenuItem>
+                    {availableLabels.map(label => (
+                      <MenuItem key={label.id} value={label.id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box 
+                            sx={{ 
+                              width: 8, 
+                              height: 8, 
+                              borderRadius: '50%', 
+                              bgcolor: label.color,
+                              mr: 1
+                            }} 
+                          />
+                          {label.name}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+            </Box>
 
             {error && (
               <Alert 
                 severity="error" 
                 sx={{ mx: 3, mt: 2 }}
                 action={
-                  <Button color="inherit" size="small" onClick={() => {
-                    setError(null);
-                    fetchIssues();
-                  }}>
+                  <Button 
+                    variant="contained" 
+                    color="error" 
+                    onClick={() => {
+                      setError(null);
+                      fetchIssues();
+                    }}
+                  >
                     Retry
                   </Button>
                 }
@@ -453,8 +405,16 @@ export function IssuesDashboard() {
                 <LoadingSpinner minHeight={200} />
               </Box>
             ) : (
-              <Box>
-                {renderTabContent(filteredIssues, statusTab > 0 ? statusesWithIssues[statusTab - 1] : undefined)}
+              <Box sx={{ p: 3 }}>
+                <Stack spacing={2}>
+                  {filteredIssues.length > 0 ? (
+                    filteredIssues.map(issue => renderIssueCard(issue))
+                  ) : (
+                    <Typography color="text.secondary" align="center">
+                      No issues found matching the selected filters.
+                    </Typography>
+                  )}
+                </Stack>
               </Box>
             )}
           </Stack>
