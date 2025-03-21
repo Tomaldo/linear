@@ -4,8 +4,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { 
   Alert, 
   Box, 
-  Container, 
-  Paper, 
   Stack, 
   Typography, 
   Chip,
@@ -19,7 +17,10 @@ import {
   MenuItem,
   SelectChangeEvent,
   Button,
-  CircularProgress
+  CircularProgress,
+  Grid,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -223,129 +224,111 @@ export function IssuesDashboard() {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={4}>
-        <Paper 
-          elevation={2}
-          sx={{ 
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}
-        >
-          <Stack>
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-              <Stack direction="row" spacing={2}>
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>{UI_TEXTS.filters.status}</InputLabel>
-                  <Select
-                    value={selectedStatus}
-                    label={UI_TEXTS.filters.status}
-                    onChange={handleStatusChange}
-                  >
-                    <MenuItem value="all">{UI_TEXTS.filters.allStatuses}</MenuItem>
-                    {statuses.map(status => (
-                      <MenuItem key={status.id} value={status.id}>
-                        {STATUS_TRANSLATIONS[status.name] || status.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+    <Box>
+      <Stack spacing={2}>
+        <Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{UI_TEXTS.filters.status}</InputLabel>
+                <Select
+                  value={selectedStatus}
+                  label={UI_TEXTS.filters.status}
+                  onChange={handleStatusChange}
+                >
+                  <MenuItem value="all">{UI_TEXTS.filters.allStatuses}</MenuItem>
+                  {statuses.map(status => (
+                    <MenuItem key={status.id} value={status.id}>
+                      {STATUS_TRANSLATIONS[status.name] || status.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
+                <Select
+                  value={selectedPriority}
+                  label={UI_TEXTS.filters.priority}
+                  onChange={(e: SelectChangeEvent) => setSelectedPriority(e.target.value)}
+                >
+                  <MenuItem value="all">{UI_TEXTS.filters.allPriorities}</MenuItem>
+                  {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{UI_TEXTS.filters.label}</InputLabel>
+                <Select
+                  value={selectedLabel}
+                  label={UI_TEXTS.filters.label}
+                  onChange={(e: SelectChangeEvent) => setSelectedLabel(e.target.value)}
+                >
+                  <MenuItem value="all">{UI_TEXTS.filters.allLabels}</MenuItem>
+                  {Object.entries(LABEL_TRANSLATIONS).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Box>
 
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
-                  <Select
-                    value={selectedPriority}
-                    label={UI_TEXTS.filters.priority}
-                    onChange={handlePriorityChange}
-                  >
-                    <MenuItem value="all">{UI_TEXTS.filters.allPriorities}</MenuItem>
-                    {Object.values(IssuePriority)
-                      .filter(p => typeof p === 'number')
-                      .map(priority => (
-                        <MenuItem key={priority} value={priority.toString()}>
-                          {PRIORITY_LABELS[priority as IssuePriority]}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>{UI_TEXTS.filters.label}</InputLabel>
-                  <Select
-                    value={selectedLabel}
-                    label={UI_TEXTS.filters.label}
-                    onChange={handleLabelChange}
-                  >
-                    <MenuItem value="all">{UI_TEXTS.filters.allLabels}</MenuItem>
-                    {availableLabels.map(label => (
-                      <MenuItem key={label.id} value={label.id}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box 
-                            sx={{ 
-                              width: 8, 
-                              height: 8, 
-                              borderRadius: '50%', 
-                              bgcolor: label.color,
-                              mr: 1
-                            }} 
-                          />
-                          {LABEL_TRANSLATIONS[label.name] || label.name}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-            </Box>
-
-            {error && (
-              <Alert 
-                severity="error" 
-                sx={{ mx: 3, mt: 2 }}
-                action={
-                  <Button 
-                    variant="contained" 
-                    color="error" 
-                    onClick={() => {
-                      setError(null);
-                      fetchIssues();
-                    }}
-                  >
-                    {UI_TEXTS.errors.retry}
-                  </Button>
-                }
+        {error && (
+          <Alert 
+            severity="error" 
+            action={
+              <Button 
+                variant="contained" 
+                color="error" 
+                onClick={() => {
+                  setError(null);
+                  fetchIssues();
+                }}
               >
-                {error}
-              </Alert>
-            )}
+                {UI_TEXTS.errors.retry}
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
 
-            {isLoading ? (
-              <Box sx={{ p: 4 }}>
-                <LoadingSpinner minHeight={200} />
-              </Box>
+        {isLoading ? (
+          <Box>
+            <LoadingSpinner minHeight={200} />
+          </Box>
+        ) : (
+          <Stack spacing={2}>
+            {filteredIssues.length > 0 ? (
+              filteredIssues.map(issue => (
+                <IssueCard key={issue.id} issue={issue} />
+              ))
             ) : (
-              <Box sx={{ p: 3 }}>
-                <Stack spacing={2}>
-                  {filteredIssues.length > 0 ? (
-                    filteredIssues.map(issue => (
-                      <IssueCard key={issue.id} issue={issue} />
-                    ))
-                  ) : (
-                    <Typography color="text.secondary" align="center">
-                      {UI_TEXTS.issues.noIssuesFound}
-                    </Typography>
-                  )}
-                </Stack>
-              </Box>
+              <Typography color="text.secondary" align="center">
+                {UI_TEXTS.issues.noIssuesFound}
+              </Typography>
             )}
           </Stack>
-        </Paper>
+        )}
       </Stack>
 
       <Fab 
         color="primary" 
-        sx={{ position: 'fixed', bottom: 32, right: 32 }}
         onClick={handleOpenCreateDialog}
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16
+        }}
       >
         <AddIcon />
       </Fab>
@@ -356,13 +339,18 @@ export function IssuesDashboard() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>{UI_TEXTS.issues.createIssue}</DialogTitle>
+        <DialogTitle>
+          {UI_TEXTS.issues.createIssue}
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1 }}>
-            <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isLoading} />
+          <Box sx={{ pt: 2 }}>
+            <CreateIssueForm
+              onSubmit={handleCreateIssue}
+              isLoading={isLoading}
+            />
           </Box>
         </DialogContent>
       </Dialog>
-    </Container>
+    </Box>
   );
 }

@@ -1,11 +1,15 @@
 'use client';
 
 import { useForm, Controller } from 'react-hook-form';
-import { Box, Button, Stack, FormControl } from '@mui/material';
+import { Box, Button, Stack, FormControl, TextField, TextFieldProps } from '@mui/material';
 import { IssuePriority } from '@/app/features/issues/types';
 import { PrioritySelect } from '@/app/features/issues/components/PrioritySelect';
 import { UI_TEXTS } from '../constants/translations';
-import { FormTextField } from '@/app/components/FormTextField';
+import { forwardRef } from 'react';
+
+const FormTextField = forwardRef<HTMLInputElement, TextFieldProps>((props, ref) => {
+  return <TextField {...props} ref={ref} />;
+});
 
 interface CreateIssueFormProps {
   onSubmit: (data: { title: string; description: string; priority: IssuePriority }) => Promise<void>;

@@ -1,22 +1,20 @@
 'use client';
 
-import { Box } from '@mui/material';
 import dynamic from 'next/dynamic';
-import { LoadingSpinner } from '@/app/components/common/LoadingSpinner';
 
 // Import IssuesDashboard dynamically to avoid SSR issues
 const IssuesDashboard = dynamic(
   () => import('./features/issues/components/IssuesDashboard').then(mod => mod.IssuesDashboard),
   { 
     ssr: false,
-    loading: () => <LoadingSpinner />
+    loading: () => (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+        <span>Loading...</span>
+      </div>
+    )
   }
 );
 
 export default function Home() {
-  return (
-    <Box component="main">
-      <IssuesDashboard />
-    </Box>
-  );
+  return <IssuesDashboard />;
 }

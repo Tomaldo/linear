@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Paper, Stack, Typography, Chip, Button } from '@mui/material';
+import { Box, Paper, Typography, Stack, Button, Chip } from '@mui/material';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
-import { PRIORITY_LABELS, UI_TEXTS, STATUS_TRANSLATIONS, LABEL_TRANSLATIONS } from '../constants/translations';
+import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS } from '../constants/translations';
 
 interface IssueCardProps {
   issue: IssueWithState;
@@ -32,30 +32,35 @@ export function IssueCard({ issue }: IssueCardProps) {
 
   return (
     <Paper 
-      elevation={1}
+      variant="outlined" 
       sx={{ 
-        p: 3,
+        borderRadius: 1,
         '&:hover': {
-          boxShadow: 3
+          borderColor: 'primary.main',
+          bgcolor: 'action.hover'
         }
       }}
     >
-      <Stack spacing={2}>
+      <Box sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="subtitle1" fontWeight={500}>
             {issue.title}
           </Typography>
 
           {issue.description && (
             <>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ whiteSpace: 'pre-wrap' }}
+              >
                 {isExpanded ? issue.description : truncatedFirstLine}
               </Typography>
               {hasMoreContent && (
                 <Button
                   size="small"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  sx={{ alignSelf: 'flex-start' }}
+                  sx={{ alignSelf: 'flex-start', p: 0 }}
                 >
                   {isExpanded ? UI_TEXTS.issues.showLess : UI_TEXTS.issues.showMore}
                 </Button>
@@ -71,7 +76,8 @@ export function IssueCard({ issue }: IssueCardProps) {
                 sx={{
                   backgroundColor: 'primary.main',
                   color: 'white',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  height: '24px'
                 }}
               />
             )}
@@ -85,39 +91,30 @@ export function IssueCard({ issue }: IssueCardProps) {
                   color: getPriorityColor(issue.priority),
                   borderColor: `${getPriorityColor(issue.priority)}40`, 
                   border: '1px solid',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  height: '24px'
                 }}
               />
             )}
-          </Stack>
 
-          {issue.labels.length > 0 && (
-            <Stack 
-              direction="row" 
-              spacing={1} 
-              sx={{ 
-                flexWrap: 'wrap',
-                gap: 1
-              }}
-            >
-              {issue.labels.map(label => (
-                <Chip
-                  key={label.id}
-                  label={LABEL_TRANSLATIONS[label.name] || label.name}
-                  size="small"
-                  sx={{
-                    backgroundColor: `${label.color}1A`, 
-                    color: label.color,
-                    borderColor: `${label.color}40`, 
-                    border: '1px solid',
-                    fontWeight: 500
-                  }}
-                />
-              ))}
-            </Stack>
-          )}
+            {issue.labels.map(label => (
+              <Chip
+                key={label.id}
+                label={label.name}
+                size="small"
+                sx={{
+                  backgroundColor: `${label.color}1A`,
+                  color: label.color,
+                  borderColor: `${label.color}40`,
+                  border: '1px solid',
+                  fontWeight: 500,
+                  height: '24px'
+                }}
+              />
+            ))}
+          </Stack>
         </Stack>
-      </Stack>
+      </Box>
     </Paper>
   );
 }
