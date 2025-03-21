@@ -15,12 +15,13 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  Fab
+  Fab,
+  Chip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
-import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
+import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
 
 interface TabPanelProps {
@@ -135,6 +136,21 @@ export function IssuesDashboard() {
     }
   };
 
+  const getPriorityColor = (priority: IssuePriority): string => {
+    switch (priority) {
+      case IssuePriority.Urgent:
+        return '#EF4444'; // Red
+      case IssuePriority.High:
+        return '#F59E0B'; // Orange
+      case IssuePriority.Medium:
+        return '#3B82F6'; // Blue
+      case IssuePriority.Low:
+        return '#10B981'; // Green
+      default:
+        return '#6B7280'; // Gray
+    }
+  };
+
   const fetchIssues = async () => {
     setIsLoading(true);
     setError(null);
@@ -160,13 +176,19 @@ export function IssuesDashboard() {
       const issuesWithState = await Promise.all(
         issues.map(async (issue: Issue) => {
           const state = await issue.state;
+          const labelsResponse = await issue.labels();
+          const labels = labelsResponse.nodes.map(label => ({
+            id: label.id,
+            name: label.name,
+            color: label.color
+          }));
           return {
             id: issue.id,
             title: issue.title,
             description: issue.description ?? null,
             stateId: state?.id ?? null,
             stateName: state?.name ?? null,
-            labels: [],
+            labels,
             priority: issue.priority as IssuePriority
           };
         })
@@ -223,55 +245,78 @@ export function IssuesDashboard() {
   const renderIssueCard = (issue: IssueWithState) => (
     <Paper 
       key={issue.id} 
+      elevation={1}
       sx={{ 
         p: 3,
-        boxShadow: 1,
-        borderRadius: 2,
         '&:hover': {
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-          transition: 'all 0.2s ease-in-out'
+          boxShadow: 3
         }
       }}
     >
       <Stack spacing={2}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>{issue.title}</Typography>
-        {issue.description && (
-          <Typography color="text.secondary" sx={{ fontSize: '0.95rem' }}>
-            {issue.description}
+        <Stack spacing={1}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {issue.title}
           </Typography>
-        )}
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              bgcolor: 'primary.light', 
-              color: 'white',
-              px: 2,
-              py: 0.75,
-              borderRadius: '20px',
-              fontWeight: 500
-            }}
-          >
-            {issue.stateName}
-          </Typography>
-          {issue.priority !== undefined && (
-            <Typography 
-              variant="body2" 
+
+          {issue.description && (
+            <Typography variant="body2" color="text.secondary">
+              {issue.description}
+            </Typography>
+          )}
+
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+            {issue.stateName && (
+              <Chip
+                label={issue.stateName}
+                size="small"
+                sx={{
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  fontWeight: 500
+                }}
+              />
+            )}
+            
+            {issue.priority !== undefined && (
+              <Chip
+                label={getPriorityLabel(issue.priority)}
+                size="small"
+                sx={{
+                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, // 10% opacity
+                  color: getPriorityColor(issue.priority),
+                  borderColor: `${getPriorityColor(issue.priority)}40`, // 25% opacity
+                  border: '1px solid',
+                  fontWeight: 500
+                }}
+              />
+            )}
+          </Stack>
+
+          {issue.labels.length > 0 && (
+            <Stack 
+              direction="row" 
+              spacing={1} 
               sx={{ 
-                bgcolor: issue.priority === IssuePriority.NoPriority ? 'grey.400' :
-                       issue.priority === IssuePriority.Low ? 'info.light' :
-                       issue.priority === IssuePriority.Medium ? 'warning.light' :
-                       'error.light',
-                color: 'white',
-                px: 2,
-                py: 0.75,
-                borderRadius: '20px',
-                fontWeight: 500
+                flexWrap: 'wrap',
+                gap: 1
               }}
             >
-              Priority: {getPriorityLabel(issue.priority)}
-            </Typography>
+              {issue.labels.map(label => (
+                <Chip
+                  key={label.id}
+                  label={label.name}
+                  size="small"
+                  sx={{
+                    backgroundColor: `${label.color}1A`, // 10% opacity
+                    color: label.color,
+                    borderColor: `${label.color}40`, // 25% opacity
+                    border: '1px solid',
+                    fontWeight: 500
+                  }}
+                />
+              ))}
+            </Stack>
           )}
         </Stack>
       </Stack>

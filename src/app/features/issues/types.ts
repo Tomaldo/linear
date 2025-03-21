@@ -1,6 +1,6 @@
 import { Issue } from '@linear/sdk';
 
-interface IssueLabel {
+export interface IssueLabel {
   id: string;
   name: string;
   color: string;
@@ -24,7 +24,7 @@ export enum IssuePriority {
 }
 
 export const PRIORITY_LABELS: Record<IssuePriority, string> = {
-  [IssuePriority.NoPriority]: 'No priority',
+  [IssuePriority.NoPriority]: 'No Priority',
   [IssuePriority.Urgent]: 'Urgent',
   [IssuePriority.High]: 'High',
   [IssuePriority.Medium]: 'Medium',
