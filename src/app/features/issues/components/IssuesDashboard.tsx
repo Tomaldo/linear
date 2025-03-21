@@ -21,7 +21,9 @@ import {
   CircularProgress,
   Grid,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Checkbox,
+  ListItemText
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -45,24 +47,24 @@ export function IssuesDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedPriority, setSelectedPriority] = useState<string>('all');
-  const [selectedLabel, setSelectedLabel] = useState<string>('all');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
   const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
 
-  const handleStatusChange = (event: SelectChangeEvent) => {
-    setSelectedStatus(event.target.value);
+  const handleStatusChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedStatuses(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
   };
 
-  const handlePriorityChange = (event: SelectChangeEvent) => {
-    setSelectedPriority(event.target.value);
+  const handlePriorityChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedPriorities(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
   };
 
-  const handleLabelChange = (event: SelectChangeEvent) => {
-    setSelectedLabel(event.target.value);
+  const handleLabelChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedLabels(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
   };
 
   const availableLabels = useMemo(() => {
@@ -79,21 +81,21 @@ export function IssuesDashboard() {
     let filtered = [...issues];
 
     // Filter by status
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(issue => issue.stateId === selectedStatus);
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter(issue => selectedStatuses.includes(issue.stateId || ''));
     }
 
     // Filter by priority
-    if (selectedPriority !== 'all') {
+    if (selectedPriorities.length > 0) {
       filtered = filtered.filter(issue => 
-        issue.priority === Number(selectedPriority) as IssuePriority
+        selectedPriorities.includes(String(issue.priority))
       );
     }
 
     // Filter by label
-    if (selectedLabel !== 'all') {
+    if (selectedLabels.length > 0) {
       filtered = filtered.filter(issue => 
-        issue.labels.some(label => label.id === selectedLabel)
+        issue.labels.some(label => selectedLabels.includes(label.id))
       );
     }
 
@@ -111,7 +113,7 @@ export function IssuesDashboard() {
 
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
-  }, [issues, selectedStatus, selectedPriority, selectedLabel]);
+  }, [issues, selectedStatuses, selectedPriorities, selectedLabels]);
 
   const getPriorityColor = (priority: IssuePriority): string => {
     switch (priority) {
@@ -231,51 +233,95 @@ export function IssuesDashboard() {
         <Box>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>{UI_TEXTS.filters.status}</InputLabel>
+              <FormControl fullWidth>
+                <InputLabel id="status-select-label">{UI_TEXTS.filters.status}</InputLabel>
                 <Select
-                  value={selectedStatus}
-                  label={UI_TEXTS.filters.status}
+                  labelId="status-select-label"
+                  id="status-select"
+                  multiple
+                  value={selectedStatuses}
                   onChange={handleStatusChange}
+                  label={UI_TEXTS.filters.status}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((statusId) => {
+                        const status = statuses.find(s => s.id === statusId);
+                        return status ? (
+                          <Chip 
+                            key={statusId} 
+                            label={STATUS_TRANSLATIONS[status.name] || status.name} 
+                            size="small" 
+                          />
+                        ) : null;
+                      })}
+                    </Box>
+                  )}
                 >
-                  <MenuItem value="all">{UI_TEXTS.filters.allStatuses}</MenuItem>
-                  {statuses.map(status => (
+                  {statuses.map((status) => (
                     <MenuItem key={status.id} value={status.id}>
-                      {STATUS_TRANSLATIONS[status.name] || status.name}
+                      <Checkbox checked={selectedStatuses.includes(status.id)} />
+                      <ListItemText primary={STATUS_TRANSLATIONS[status.name] || status.name} />
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
                 <Select
-                  value={selectedPriority}
+                  multiple
+                  value={selectedPriorities}
+                  onChange={handlePriorityChange}
                   label={UI_TEXTS.filters.priority}
-                  onChange={(e: SelectChangeEvent) => setSelectedPriority(e.target.value)}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((priority) => (
+                        <Chip 
+                          key={priority} 
+                          label={PRIORITY_LABELS[Number(priority) as IssuePriority]} 
+                          size="small" 
+                        />
+                      ))}
+                    </Box>
+                  )}
                 >
-                  <MenuItem value="all">{UI_TEXTS.filters.allPriorities}</MenuItem>
                   {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
                     <MenuItem key={value} value={value}>
-                      {label}
+                      <Checkbox checked={selectedPriorities.includes(value)} />
+                      <ListItemText primary={label} />
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel>{UI_TEXTS.filters.label}</InputLabel>
                 <Select
-                  value={selectedLabel}
+                  multiple
+                  value={selectedLabels}
+                  onChange={handleLabelChange}
                   label={UI_TEXTS.filters.label}
-                  onChange={(e: SelectChangeEvent) => setSelectedLabel(e.target.value)}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((labelId) => {
+                        const label = availableLabels.find(l => l.id === labelId);
+                        return label ? (
+                          <Chip 
+                            key={labelId} 
+                            label={LABEL_TRANSLATIONS[label.name] || label.name} 
+                            size="small" 
+                          />
+                        ) : null;
+                      })}
+                    </Box>
+                  )}
                 >
-                  <MenuItem value="all">{UI_TEXTS.filters.allLabels}</MenuItem>
-                  {availableLabels.map(label => (
+                  {availableLabels.map((label) => (
                     <MenuItem key={label.id} value={label.id}>
-                      {LABEL_TRANSLATIONS[label.name] || label.name}
+                      <Checkbox checked={selectedLabels.includes(label.id)} />
+                      <ListItemText primary={LABEL_TRANSLATIONS[label.name] || label.name} />
                     </MenuItem>
                   ))}
                 </Select>
