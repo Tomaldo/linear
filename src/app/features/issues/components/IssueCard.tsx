@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Box, Paper, Typography, Stack, Button, Chip } from '@mui/material';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
-import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS } from '../constants/translations';
+import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS, LABEL_TRANSLATIONS } from '../constants/translations';
 
 interface IssueCardProps {
   issue: IssueWithState;
@@ -100,7 +100,7 @@ export function IssueCard({ issue }: IssueCardProps) {
             {issue.labels.map(label => (
               <Chip
                 key={label.id}
-                label={label.name}
+                label={LABEL_TRANSLATIONS[label.name] || label.name}
                 size="small"
                 sx={{
                   backgroundColor: `${label.color}1A`,

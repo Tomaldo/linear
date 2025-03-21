@@ -271,9 +271,9 @@ export function IssuesDashboard() {
                   onChange={(e: SelectChangeEvent) => setSelectedLabel(e.target.value)}
                 >
                   <MenuItem value="all">{UI_TEXTS.filters.allLabels}</MenuItem>
-                  {Object.entries(LABEL_TRANSLATIONS).map(([value, label]) => (
-                    <MenuItem key={value} value={value}>
-                      {label}
+                  {availableLabels.map(label => (
+                    <MenuItem key={label.id} value={label.id}>
+                      {LABEL_TRANSLATIONS[label.name] || label.name}
                     </MenuItem>
                   ))}
                 </Select>
