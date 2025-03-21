@@ -47,18 +47,45 @@ export function IssuesDashboard() {
   const [issues, setIssues] = useState<IssueWithState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [statusTab, setStatusTab] = useState(0);
+  const [priorityTab, setPriorityTab] = useState(0);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
+  const handleStatusTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setStatusTab(newValue);
+  };
+
+  const handlePriorityTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setPriorityTab(newValue);
   };
 
   const filteredIssues = useMemo(() => {
-    if (selectedTab === 0) return issues;
-    const status = statuses[selectedTab - 1];
-    return status ? issues.filter(issue => issue.stateId === status.id) : [];
-  }, [issues, selectedTab, statuses]);
+    let filtered = issues;
+
+    // Filter by status
+    if (statusTab !== 0) {
+      const status = statuses[statusTab - 1];
+      filtered = status ? filtered.filter(issue => issue.stateId === status.id) : [];
+    }
+
+    // Filter by priority
+    if (priorityTab !== 0) {
+      const priority = (priorityTab - 1) as IssuePriority;
+      filtered = filtered.filter(issue => issue.priority === priority);
+    }
+
+    return filtered;
+  }, [issues, statusTab, priorityTab, statuses]);
+
+  const getPriorityLabel = (priority: IssuePriority): string => {
+    switch (priority) {
+      case IssuePriority.NoPriority: return 'No Priority';
+      case IssuePriority.Low: return 'Low';
+      case IssuePriority.Medium: return 'Medium';
+      case IssuePriority.High: return 'High';
+      default: return 'Unknown';
+    }
+  };
 
   const fetchIssues = async () => {
     setIsLoading(true);
@@ -199,52 +226,67 @@ export function IssuesDashboard() {
           >
             {issue.stateName}
           </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              bgcolor: issue.priority === 0 ? 'grey.400' :
-                     issue.priority === 1 ? 'info.light' :
-                     issue.priority === 2 ? 'warning.light' :
-                     'error.light',
-              color: 'white',
-              px: 2,
-              py: 0.75,
-              borderRadius: '20px',
-              fontWeight: 500
-            }}
-          >
-            Priority: {issue.priority === 0 ? 'None' :
-                     issue.priority === 1 ? 'Low' :
-                     issue.priority === 2 ? 'Medium' :
-                     'High'}
-          </Typography>
+          {issue.priority !== undefined && (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                bgcolor: issue.priority === IssuePriority.NoPriority ? 'grey.400' :
+                       issue.priority === IssuePriority.Low ? 'info.light' :
+                       issue.priority === IssuePriority.Medium ? 'warning.light' :
+                       'error.light',
+                color: 'white',
+                px: 2,
+                py: 0.75,
+                borderRadius: '20px',
+                fontWeight: 500
+              }}
+            >
+              Priority: {getPriorityLabel(issue.priority)}
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Paper>
   );
 
-  const renderTabContent = (issues: IssueWithState[], status?: { name: string }) => (
-    <Stack spacing={3} sx={{ p: 3 }}>
-      {issues.length === 0 ? (
-        <Paper 
-          sx={{ 
-            p: 3, 
-            textAlign: 'center',
-            bgcolor: 'grey.50'
-          }}
-        >
-          <Typography color="text.secondary">
-            {status 
-              ? `No issues found in ${status.name}`
-              : 'No issues found'
-            }
-          </Typography>
-        </Paper>
-      ) : (
-        issues.map(renderIssueCard)
-      )}
-    </Stack>
-  );
+  const renderTabContent = (issues: IssueWithState[], status?: { name: string }) => {
+    let priorityLabel: string | null = null;
+    if (priorityTab > 0) {
+      const priority = (priorityTab - 1) as IssuePriority;
+      priorityLabel = getPriorityLabel(priority);
+    }
+
+    const statusLabel = status?.name;
+    
+    let emptyMessage = 'No issues found';
+    if (statusLabel && priorityLabel) {
+      emptyMessage = `No ${priorityLabel} priority issues in ${statusLabel}`;
+    } else if (statusLabel) {
+      emptyMessage = `No issues found in ${statusLabel}`;
+    } else if (priorityLabel) {
+      emptyMessage = `No ${priorityLabel} priority issues found`;
+    }
+
+    return (
+      <Stack spacing={3} sx={{ p: 3 }}>
+        {issues.length === 0 ? (
+          <Paper 
+            sx={{ 
+              p: 3, 
+              textAlign: 'center',
+              bgcolor: 'grey.50'
+            }}
+          >
+            <Typography color="text.secondary">
+              {emptyMessage}
+            </Typography>
+          </Paper>
+        ) : (
+          issues.map(renderIssueCard)
+        )}
+      </Stack>
+    );
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -267,56 +309,67 @@ export function IssuesDashboard() {
             overflow: 'hidden'
           }}
         >
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-            <Tabs 
-              value={selectedTab} 
-              onChange={handleTabChange}
-              sx={{
-                px: 2,
-                pt: 2
-              }}
-            >
-              <Tab label="Show All" />
-              {statuses.map((status, index) => (
-                <Tab key={status.id} label={status.name} />
-              ))}
-            </Tabs>
-          </Box>
-
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ mx: 3, mt: 2 }}
-              action={
-                <Button color="inherit" size="small" onClick={() => {
-                  setError(null);
-                  fetchIssues();
-                }}>
-                  Retry
-                </Button>
-              }
-            >
-              {error}
-            </Alert>
-          )}
-
-          {isLoading ? (
-            <Box sx={{ p: 4 }}>
-              <LoadingSpinner minHeight={200} />
+          <Stack>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+              <Tabs 
+                value={statusTab} 
+                onChange={handleStatusTabChange}
+                sx={{
+                  px: 2,
+                  pt: 2
+                }}
+              >
+                <Tab label="All Statuses" />
+                {statuses.map((status, index) => (
+                  <Tab key={status.id} label={status.name} />
+                ))}
+              </Tabs>
             </Box>
-          ) : (
-            <>
-              <TabPanel value={selectedTab} index={0}>
-                {renderTabContent(filteredIssues)}
-              </TabPanel>
 
-              {statuses.map((status, index) => (
-                <TabPanel key={status.id} value={selectedTab} index={index + 1}>
-                  {renderTabContent(filteredIssues, status)}
-                </TabPanel>
-              ))}
-            </>
-          )}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+              <Tabs 
+                value={priorityTab} 
+                onChange={handlePriorityTabChange}
+                sx={{
+                  px: 2,
+                  pt: 2
+                }}
+              >
+                <Tab label="All Priorities" />
+                <Tab label="No Priority" />
+                <Tab label="Low" />
+                <Tab label="Medium" />
+                <Tab label="High" />
+              </Tabs>
+            </Box>
+
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ mx: 3, mt: 2 }}
+                action={
+                  <Button color="inherit" size="small" onClick={() => {
+                    setError(null);
+                    fetchIssues();
+                  }}>
+                    Retry
+                  </Button>
+                }
+              >
+                {error}
+              </Alert>
+            )}
+
+            {isLoading ? (
+              <Box sx={{ p: 4 }}>
+                <LoadingSpinner minHeight={200} />
+              </Box>
+            ) : (
+              <Box>
+                {renderTabContent(filteredIssues, statusTab > 0 ? statuses[statusTab - 1] : undefined)}
+              </Box>
+            )}
+          </Stack>
         </Paper>
       </Stack>
     </Container>
