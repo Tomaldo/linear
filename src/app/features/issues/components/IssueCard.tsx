@@ -1,6 +1,6 @@
 'use client';
 
-import { Paper, Typography, Box, Chip } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Stack, Box } from '@mui/material';
 import { IssueWithState } from '@/app/features/issues/types';
 
 interface IssueCardProps {
@@ -9,48 +9,92 @@ interface IssueCardProps {
 
 export function IssueCard({ issue }: IssueCardProps) {
   return (
-    <Paper 
+    <Card 
+      variant="outlined"
       sx={{ 
-        p: 2,
         '&:hover': {
-          boxShadow: (theme) => theme.shadows[3],
-          transition: (theme) => theme.transitions.create('box-shadow'),
+          boxShadow: 1,
+          transition: 'box-shadow 0.2s'
         }
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-        <Box flex={1}>
-          <Typography variant="h6" gutterBottom>
-            {issue.title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {issue.description || 'No description provided'}
-          </Typography>
-        </Box>
-        {issue.stateName && (
-          <Chip 
-            label={issue.stateName}
-            size="small"
+      <CardContent>
+        <Typography 
+          variant="subtitle1" 
+          component="h3" 
+          gutterBottom
+          sx={{ 
+            fontWeight: 500,
+            mb: 1
+          }}
+        >
+          {issue.title}
+        </Typography>
+
+        {issue.description && (
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
             sx={{ 
-              ml: 2,
-              backgroundColor: (theme) => {
-                switch (issue.stateName?.toLowerCase()) {
-                  case 'todo':
-                    return theme.palette.info.light;
-                  case 'in progress':
-                    return theme.palette.warning.light;
-                  case 'done':
-                    return theme.palette.success.light;
-                  default:
-                    return theme.palette.grey[300];
-                }
-              },
-              color: (theme) => theme.palette.getContrastText(theme.palette.info.light),
+              mb: 2,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+          >
+            {issue.description}
+          </Typography>
+        )}
+
+        {issue.labels && issue.labels.length > 0 && (
+          <Stack 
+            direction="row" 
+            spacing={1} 
+            sx={{ 
+              mb: 2,
+              flexWrap: 'wrap',
+              gap: 1,
+              minHeight: 24 // Match loading skeleton
+            }}
+          >
+            {issue.labels.map((label) => (
+              <Chip
+                key={label.id}
+                label={label.name}
+                size="small"
+                sx={{
+                  height: 24,
+                  backgroundColor: `${label.color}26`, // 15% opacity
+                  border: `1px solid ${label.color}4D`, // 30% opacity
+                  color: label.color,
+                  fontWeight: 500,
+                  borderRadius: '12px',
+                  maxWidth: 160,
+                  '.MuiChip-label': {
+                    px: 1.5,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }
+                }}
+              />
+            ))}
+          </Stack>
+        )}
+
+        <Box>
+          <Chip
+            label={issue.stateName || 'No Status'}
+            size="small"
+            sx={{
+              height: 24,
+              backgroundColor: 'action.hover'
             }}
           />
-        )}
-      </Box>
-    </Paper>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }
 
