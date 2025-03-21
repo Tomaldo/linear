@@ -1,95 +1,57 @@
 'use client';
 
-import { Paper, Typography, Stack, Chip, Fade } from '@mui/material';
-import { Issue } from '@linear/sdk';
-import { memo } from 'react';
+import { Paper, Typography, Box, Chip } from '@mui/material';
+import { IssueWithState } from '@/app/features/issues/types';
 
 interface IssueCardProps {
-  issue: Issue & { stateName?: string };
+  issue: IssueWithState;
 }
 
-const IssueCard = memo(({ issue }: IssueCardProps) => {
-  const getStateColor = (stateName?: string) => {
-    if (!stateName) return undefined;
-    
-    const lowerState = stateName.toLowerCase();
-    if (lowerState.includes('done') || lowerState.includes('completed')) {
-      return 'success';
-    }
-    if (lowerState.includes('in progress') || lowerState.includes('active')) {
-      return 'primary';
-    }
-    if (lowerState.includes('blocked') || lowerState.includes('canceled')) {
-      return 'error';
-    }
-    if (lowerState.includes('backlog') || lowerState.includes('todo')) {
-      return 'default';
-    }
-    return 'default';
-  };
-
+export function IssueCard({ issue }: IssueCardProps) {
   return (
-    <Fade in timeout={300}>
-      <Paper 
-        variant="outlined" 
-        sx={{ 
-          p: 2,
-          '&:hover': {
-            bgcolor: 'action.hover',
-            transition: theme => theme.transitions.create('background-color', {
-              duration: theme.transitions.duration.shorter
-            })
-          }
-        }}
-      >
-        <Stack spacing={1.5}>
-          <Typography 
-            variant="subtitle1" 
-            fontWeight="medium"
-            sx={{ 
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical'
-            }}
-          >
+    <Paper 
+      sx={{ 
+        p: 2,
+        '&:hover': {
+          boxShadow: (theme) => theme.shadows[3],
+          transition: (theme) => theme.transitions.create('box-shadow'),
+        }
+      }}
+    >
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+        <Box flex={1}>
+          <Typography variant="h6" gutterBottom>
             {issue.title}
           </Typography>
-          {issue.description && (
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ 
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical'
-              }}
-            >
-              {issue.description}
-            </Typography>
-          )}
-          {issue.stateName && (
-            <Chip 
-              label={issue.stateName}
-              size="small"
-              color={getStateColor(issue.stateName)}
-              sx={{ 
-                alignSelf: 'flex-start',
-                fontWeight: 500,
-                minWidth: 80,
-                justifyContent: 'center'
-              }}
-            />
-          )}
-        </Stack>
-      </Paper>
-    </Fade>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {issue.description || 'No description provided'}
+          </Typography>
+        </Box>
+        {issue.stateName && (
+          <Chip 
+            label={issue.stateName}
+            size="small"
+            sx={{ 
+              ml: 2,
+              backgroundColor: (theme) => {
+                switch (issue.stateName?.toLowerCase()) {
+                  case 'todo':
+                    return theme.palette.info.light;
+                  case 'in progress':
+                    return theme.palette.warning.light;
+                  case 'done':
+                    return theme.palette.success.light;
+                  default:
+                    return theme.palette.grey[300];
+                }
+              },
+              color: (theme) => theme.palette.getContrastText(theme.palette.info.light),
+            }}
+          />
+        )}
+      </Box>
+    </Paper>
   );
-});
+}
 
 IssueCard.displayName = 'IssueCard';
-
-export { IssueCard };

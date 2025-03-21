@@ -2,27 +2,35 @@
 
 import { Stack, Paper, Skeleton, Box } from '@mui/material';
 
-export const IssueListSkeleton = () => {
+export function IssueListSkeleton() {
   return (
     <Stack spacing={2}>
-      <Skeleton variant="text" width={200} height={32} />
-      <Paper sx={{ p: 2 }}>
-        <Stack spacing={2}>
-          {[...Array(3)].map((_, index) => (
-            <Box key={index}>
-              <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="90%" height={20} sx={{ mb: 1 }} />
-              <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1 }} />
-              <Skeleton 
-                variant="rounded" 
-                width={80} 
-                height={24} 
-                sx={{ borderRadius: 1 }}
-              />
+      {[1, 2, 3].map((index) => (
+        <Paper
+          key={index}
+          sx={{
+            p: 2,
+            '&:hover': {
+              boxShadow: (theme) => theme.shadows[3],
+              transition: (theme) => theme.transitions.create('box-shadow'),
+            }
+          }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box flex={1}>
+              <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
+              <Skeleton variant="text" width="90%" />
+              <Skeleton variant="text" width="80%" />
             </Box>
-          ))}
-        </Stack>
-      </Paper>
+            <Skeleton 
+              variant="rounded" 
+              width={80} 
+              height={24} 
+              sx={{ ml: 2 }} 
+            />
+          </Box>
+        </Paper>
+      ))}
     </Stack>
   );
-};
+}
