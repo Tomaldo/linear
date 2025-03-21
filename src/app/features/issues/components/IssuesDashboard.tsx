@@ -109,7 +109,7 @@ export function IssuesDashboard() {
   }, [priorityTab, prioritiesWithIssues.length]);
 
   const filteredIssues = useMemo(() => {
-    let filtered = issues;
+    let filtered = [...issues];
 
     // Filter by status
     if (statusTab !== 0) {
@@ -123,7 +123,20 @@ export function IssuesDashboard() {
       filtered = filtered.filter(issue => issue.priority === priority);
     }
 
-    return filtered;
+    // Sort by priority (Urgent -> High -> Medium -> Low -> No Priority)
+    // In Linear API: Urgent = 1, High = 2, Medium = 3, Low = 4, NoPriority = 0
+    return filtered.sort((a, b) => {
+      const priorityA = a.priority ?? IssuePriority.NoPriority;
+      const priorityB = b.priority ?? IssuePriority.NoPriority;
+      
+      // Convert to sort order where higher numbers = higher priority
+      const getSortOrder = (p: IssuePriority) => {
+        if (p === IssuePriority.NoPriority) return -1;
+        return 5 - p; // Urgent(1)->4, High(2)->3, Medium(3)->2, Low(4)->1
+      };
+
+      return getSortOrder(priorityB) - getSortOrder(priorityA);
+    });
   }, [issues, statusTab, priorityTab, statusesWithIssues, prioritiesWithIssues]);
 
   const getPriorityLabel = (priority: IssuePriority): string => {
