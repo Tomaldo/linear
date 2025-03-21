@@ -23,7 +23,7 @@ export function IssueListSkeleton() {
             }}
           >
             <CardContent>
-              {/* Title and status row */}
+              {/* Title and badges row */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                 <Skeleton 
                   variant="text" 
@@ -36,16 +36,29 @@ export function IssueListSkeleton() {
                   }} 
                 />
                 
-                <Skeleton 
-                  variant="rounded" 
-                  width={80} 
-                  height={24} 
-                  sx={{ 
-                    borderRadius: 1,
-                    opacity: 0.5,
-                    flexShrink: 0
-                  }} 
-                />
+                <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                  {/* Priority badge skeleton */}
+                  <Skeleton 
+                    variant="rounded" 
+                    width={90} 
+                    height={24} 
+                    sx={{ 
+                      borderRadius: 1,
+                      opacity: 0.5
+                    }} 
+                  />
+                  
+                  {/* Status badge skeleton */}
+                  <Skeleton 
+                    variant="rounded" 
+                    width={80} 
+                    height={24} 
+                    sx={{ 
+                      borderRadius: 1,
+                      opacity: 0.5
+                    }} 
+                  />
+                </Stack>
               </Box>
               
               {/* Description lines with proper opacity */}

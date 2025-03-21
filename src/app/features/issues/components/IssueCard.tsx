@@ -1,13 +1,33 @@
 'use client';
 
 import { Card, CardContent, Typography, Chip, Stack, Box } from '@mui/material';
-import { IssueWithState } from '@/app/features/issues/types';
+import { IssueWithState, IssuePriority, PRIORITY_LABELS } from '@/app/features/issues/types';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 interface IssueCardProps {
   issue: IssueWithState;
 }
 
 export function IssueCard({ issue }: IssueCardProps) {
+  const getPriorityIcon = (priority: IssuePriority | undefined) => {
+    const priorityValue = priority ?? IssuePriority.NoPriority;
+    
+    if (priorityValue === IssuePriority.NoPriority) {
+      return <RemoveIcon fontSize="small" />;
+    }
+
+    return (
+      <SignalCellularAltIcon 
+        fontSize="small" 
+        sx={{ 
+          opacity: (5 - priorityValue) / 4, // Higher priority = higher opacity
+          transform: priorityValue === IssuePriority.Urgent ? 'rotate(180deg)' : undefined 
+        }} 
+      />
+    );
+  };
+
   return (
     <Card 
       variant="outlined"
@@ -32,15 +52,31 @@ export function IssueCard({ issue }: IssueCardProps) {
             {issue.title}
           </Typography>
 
-          <Chip
-            label={issue.stateName || 'No Status'}
-            size="small"
-            sx={{
-              height: 24,
-              backgroundColor: 'action.hover',
-              flexShrink: 0
-            }}
-          />
+          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+            {/* Priority chip */}
+            <Chip
+              icon={getPriorityIcon(issue.priority)}
+              label={PRIORITY_LABELS[issue.priority ?? IssuePriority.NoPriority]}
+              size="small"
+              sx={{
+                height: 24,
+                backgroundColor: 'action.hover',
+                '& .MuiChip-icon': {
+                  color: 'inherit'
+                }
+              }}
+            />
+
+            {/* Status chip */}
+            <Chip
+              label={issue.stateName || 'No Status'}
+              size="small"
+              sx={{
+                height: 24,
+                backgroundColor: 'action.hover'
+              }}
+            />
+          </Stack>
         </Box>
 
         {issue.description && (

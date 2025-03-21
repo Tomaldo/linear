@@ -4,12 +4,18 @@ import { Stack, Box, Typography } from '@mui/material';
 import { IssueCard } from './IssueCard';
 import { IssueWithState } from '@/app/features/issues/types';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import { IssueListSkeleton } from './IssueListSkeleton';
 
 interface IssueListProps {
   issues: IssueWithState[];
+  isLoading?: boolean;
 }
 
-export function IssueList({ issues }: IssueListProps) {
+export function IssueList({ issues, isLoading }: IssueListProps) {
+  if (isLoading) {
+    return <IssueListSkeleton />;
+  }
+
   if (issues.length === 0) {
     return (
       <Box 

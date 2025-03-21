@@ -1,90 +1,72 @@
 'use client';
 
-import { Paper, Stack } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { Box, Button, Stack } from '@mui/material';
 import { FormTextField } from '@/app/components/common/FormTextField';
-import { LoadingButton } from '@mui/lab';
-import AddIcon from '@mui/icons-material/Add';
-
-interface CreateIssueFormData {
-  title: string;
-  description: string;
-}
+import { useForm } from 'react-hook-form';
+import { IssuePriority } from '../types';
+import { PrioritySelect } from './PrioritySelect';
 
 interface CreateIssueFormProps {
-  onSubmit: (data: CreateIssueFormData) => Promise<void>;
+  onSubmit: (data: { title: string; description: string; priority: IssuePriority }) => Promise<void>;
   isLoading?: boolean;
 }
 
-export const CreateIssueForm = ({ onSubmit, isLoading }: CreateIssueFormProps) => {
-  const { control, handleSubmit, reset } = useForm<CreateIssueFormData>({
+interface FormData {
+  title: string;
+  description: string;
+  priority: IssuePriority;
+}
+
+export function CreateIssueForm({ onSubmit, isLoading }: CreateIssueFormProps) {
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       title: '',
       description: '',
-    },
+      priority: IssuePriority.NoPriority
+    }
   });
 
-  const onFormSubmit = async (data: CreateIssueFormData) => {
+  const onFormSubmit = async (data: FormData) => {
     await onSubmit(data);
     reset();
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      <form onSubmit={handleSubmit(onFormSubmit)}>
-        <Stack spacing={3}>
-          <Controller
-            name="title"
-            control={control}
-            rules={{ 
-              required: 'Title is required',
-              minLength: {
-                value: 3,
-                message: 'Title must be at least 3 characters'
-              }
-            }}
-            render={({ field, fieldState }) => (
-              <FormTextField
-                {...field}
-                label="Title"
-                placeholder="Enter issue title"
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
-                fullWidth
-                disabled={isLoading}
-                autoFocus
-              />
-            )}
-          />
-          <Controller
-            name="description"
-            control={control}
-            render={({ field, fieldState }) => (
-              <FormTextField
-                {...field}
-                label="Description"
-                placeholder="Enter issue description"
-                multiline
-                rows={4}
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
-                fullWidth
-                disabled={isLoading}
-              />
-            )}
-          />
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={isLoading}
-            loadingPosition="start"
-            startIcon={<AddIcon />}
-            sx={{ alignSelf: 'flex-start', px: 3 }}
-          >
-            Create Issue
-          </LoadingButton>
-        </Stack>
-      </form>
-    </Paper>
+    <Box component="form" onSubmit={handleSubmit(onFormSubmit)} noValidate>
+      <Stack spacing={3}>
+        <FormTextField
+          label="Title"
+          {...register('title', { required: 'Title is required' })}
+          error={!!errors.title}
+          helperText={errors.title?.message}
+          disabled={isLoading}
+          fullWidth
+        />
+
+        <FormTextField
+          label="Description"
+          {...register('description')}
+          multiline
+          rows={4}
+          disabled={isLoading}
+          fullWidth
+        />
+
+        <PrioritySelect
+          name="priority"
+          control={control}
+          disabled={isLoading}
+        />
+
+        <Button 
+          type="submit" 
+          variant="contained" 
+          disabled={isLoading}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          {isLoading ? 'Creating...' : 'Create Issue'}
+        </Button>
+      </Stack>
+    </Box>
   );
-};
+}

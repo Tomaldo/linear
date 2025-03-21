@@ -1,124 +1,138 @@
 'use client';
 
-import { Container, Stack, Typography, Alert, Tabs, Tab, Box, Fade } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { IssueList } from '@/app/features/issues/components/IssueList';
-import { CreateIssueForm } from '@/app/features/issues/components/CreateIssueForm';
-import { IssueListSkeleton } from '@/app/features/issues/components/IssueListSkeleton';
-import { getLinearClient } from '@/app/utils/linear-client';
-import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
-import { IssueWithState } from '@/app/features/issues/types';
-import { ErrorBoundary } from '@/app/components/common/ErrorBoundary';
-import { categorizeError } from '@/app/features/issues/utils';
+import { useEffect, useState } from 'react';
+import { Alert, Box, Container, Paper, Stack, Typography } from '@mui/material';
+import { CreateIssueForm } from './CreateIssueForm';
+import { IssueList } from './IssueList';
+import { LinearClient } from '@linear/sdk';
+import { categorizeError } from '../utils';
+import { IssueWithState, IssuePriority } from '../types';
+import { ISSUE_AUTHOR } from '../constants';
 
-type IssueState = {
-  id: string;
-  name: string;
-};
+interface CreateIssueData {
+  title: string;
+  description: string;
+  priority: IssuePriority;
+}
 
-export function IssuesDashboard() {
-  const [issues, setIssues] = useState<IssueWithState[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function IssuesDashboard() {
   const [error, setError] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState('all');
-  const [issueStates, setIssueStates] = useState<IssueState[]>([]);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [issues, setIssues] = useState<IssueWithState[]>([]);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(true);
 
   const fetchIssues = async () => {
     try {
-      setIsLoading(true);
-      const client = getLinearClient();
-      
-      const { nodes: issueNodes } = await client.issues();
-      
-      const stateMap = new Map<string, IssueState>();
-      const processedIssues: IssueWithState[] = [];
-      
-      for (const issue of issueNodes) {
-        // Get issue state
-        const issueState = await issue.state;
-        if (issueState) {
-          stateMap.set(issueState.id, { id: issueState.id, name: issueState.name });
-        }
+      const client = new LinearClient({
+        apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY
+      });
 
-        // Get issue labels
-        const { nodes: labelNodes } = await issue.labels();
-        
-        processedIssues.push({
-          id: issue.id,
-          title: issue.title || '',
-          description: issue.description || '',
-          stateId: issueState?.id || null,
-          stateName: issueState?.name || null,
-          labels: labelNodes.map(label => ({
-            id: label.id,
-            name: label.name,
-            color: label.color
-          }))
-        });
-      }
+      const response = await client.issues();
+      const issuesWithState = await Promise.all(
+        response.nodes.map(async (issue) => {
+          const state = await issue.state;
+          const labels = await issue.labels();
+          
+          if (!state) {
+            throw new Error('Failed to fetch issue state');
+          }
 
-      setIssues(processedIssues);
-      setIssueStates(Array.from(stateMap.values()));
-      setError(null);
+          return {
+            id: issue.id,
+            title: issue.title,
+            description: issue.description ?? null,
+            stateId: state.id,
+            stateName: state.name,
+            labels: labels.nodes.map(label => ({
+              id: label.id,
+              name: label.name,
+              color: label.color
+            })),
+            priority: (issue.priority ?? IssuePriority.NoPriority) as IssuePriority
+          };
+        })
+      );
+
+      setIssues(issuesWithState);
     } catch (err) {
       setError(categorizeError(err));
-      console.error(err);
     } finally {
-      setIsLoading(false);
+      setIsLoadingIssues(false);
     }
   };
 
+  const handleCreateIssue = async (data: CreateIssueData) => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const client = new LinearClient({
+        apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY
+      });
+
+      // Get the first team (for demo purposes)
+      const teams = await client.teams();
+      const team = teams.nodes[0];
+
+      if (!team) {
+        throw new Error('team_not_found');
+      }
+
+      // Create the issue
+      const createdIssue = await client.createIssue({
+        teamId: team.id,
+        title: `${ISSUE_AUTHOR} - ${data.title}`,
+        description: data.description,
+        priority: data.priority
+      });
+
+      if (!createdIssue) {
+        throw new Error('Failed to create issue');
+      }
+
+      // Add the new issue to the list with its state
+      const state = await createdIssue.state;
+      
+      if (!state) {
+        throw new Error('Failed to fetch issue state');
+      }
+
+      setIssues(prev => [{
+        id: createdIssue.id,
+        title: createdIssue.title,
+        description: createdIssue.description ?? null,
+        stateId: state.id,
+        stateName: state.name,
+        labels: [],
+        priority: (createdIssue.priority ?? IssuePriority.NoPriority) as IssuePriority
+      }, ...prev]);
+
+    } catch (err) {
+      setError(categorizeError(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Fetch issues on component mount
   useEffect(() => {
     fetchIssues();
   }, []);
 
-  const handleCreateIssue = async (data: { title: string; description: string }) => {
-    setIsCreating(true);
-    setError(null);
-    try {
-      const client = getLinearClient();
-
-      const { nodes: teams } = await client.teams();
-      const team = teams[0];
-      
-      if (!team) {
-        throw new Error('No team found in Linear. Please create a team before creating issues.');
-      }
-
-      await client.createIssue({
-        teamId: team.id,
-        title: `${ISSUE_AUTHOR} - ${data.title}`,
-        description: data.description,
-      });
-
-      await fetchIssues();
-    } catch (err) {
-      setError(categorizeError(err));
-      console.error(err);
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    setSelectedTab(newValue);
-  };
-
-  const filteredIssues = selectedTab === 'all' 
-    ? issues 
-    : issues.filter(issue => issue.stateName?.toLowerCase() === selectedTab);
-
   return (
-    <ErrorBoundary>
-      <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Stack spacing={3}>
+        <Typography variant="h4" component="h1">
+          Issues Dashboard
+        </Typography>
+
         {error && (
           <Alert 
             severity="error" 
+            onClose={() => setError(null)}
             sx={{ 
-              mb: 3,
-              '& .MuiAlert-message': {
-                width: '100%'
+              '& .MuiAlert-message': { 
+                flex: 1 
               }
             }}
           >
@@ -126,52 +140,15 @@ export function IssuesDashboard() {
           </Alert>
         )}
 
-        <Stack spacing={3}>
-          <Typography variant="h6">Create New Issue</Typography>
-          <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isCreating} />
-        </Stack>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" component="h2" gutterBottom>
+            Create Issue
+          </Typography>
+          <CreateIssueForm onSubmit={handleCreateIssue} isLoading={isSubmitting} />
+        </Paper>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 4 }}>
-          <Tabs 
-            value={selectedTab} 
-            onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{
-              '.MuiTab-root': {
-                textTransform: 'none',
-                minHeight: 48,
-                fontSize: 'body2.fontSize',
-                fontWeight: 'medium',
-              }
-            }}
-          >
-            <Tab 
-              label={`All (${issues.length})`}
-              value="all"
-            />
-            {issueStates.map((state) => (
-              <Tab
-                key={state.id}
-                label={`${state.name} (${issues.filter(i => i.stateId === state.id).length})`}
-                value={state.name.toLowerCase()}
-              />
-            ))}
-          </Tabs>
-        </Box>
-
-        <Box sx={{ mt: 3 }}>
-          <Fade in={!isLoading}>
-            <div>
-              <IssueList issues={filteredIssues} />
-            </div>
-          </Fade>
-          {isLoading && <IssueListSkeleton />}
-        </Box>
-      </Container>
-    </ErrorBoundary>
+        <IssueList issues={issues} isLoading={isLoadingIssues} />
+      </Stack>
+    </Container>
   );
 }
