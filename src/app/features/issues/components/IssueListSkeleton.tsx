@@ -23,18 +23,32 @@ export function IssueListSkeleton() {
             }}
           >
             <CardContent>
-              {/* Title - matching our typography scale */}
-              <Skeleton 
-                variant="text" 
-                width="60%" 
-                height={28} 
-                sx={{ 
-                  mb: 1,
-                  borderRadius: 1
-                }} 
-              />
+              {/* Title and status row */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                <Skeleton 
+                  variant="text" 
+                  width="60%" 
+                  height={28} 
+                  sx={{ 
+                    borderRadius: 1,
+                    flex: 1,
+                    mr: 2
+                  }} 
+                />
+                
+                <Skeleton 
+                  variant="rounded" 
+                  width={80} 
+                  height={24} 
+                  sx={{ 
+                    borderRadius: 1,
+                    opacity: 0.5,
+                    flexShrink: 0
+                  }} 
+                />
+              </Box>
               
-              {/* Description - two lines with proper opacity */}
+              {/* Description lines with proper opacity */}
               <Stack spacing={0.5} sx={{ mb: 2 }}>
                 <Skeleton 
                   variant="text" 
@@ -50,15 +64,14 @@ export function IssueListSkeleton() {
                 />
               </Stack>
               
-              {/* Labels - following our label design system */}
+              {/* Labels with proper styling */}
               <Stack 
                 direction="row" 
                 spacing={1} 
                 sx={{ 
-                  mb: 2,
                   flexWrap: 'wrap',
                   gap: 1,
-                  minHeight: 24 // Consistent with actual label height
+                  minHeight: 24 // Match actual labels
                 }}
               >
                 {Array(labelCount).fill(0).map((_, index) => (
@@ -68,26 +81,13 @@ export function IssueListSkeleton() {
                     width={getRandomLabelWidth()}
                     height={24}
                     sx={{ 
-                      borderRadius: '12px', // Matching our label design
+                      borderRadius: '12px', // Match label design
                       opacity: 0.6,
-                      flexShrink: 0 // Prevent label width compression
+                      flexShrink: 0 // Prevent width compression
                     }}
                   />
                 ))}
               </Stack>
-              
-              {/* Status chip - consistent with our hierarchy */}
-              <Box>
-                <Skeleton 
-                  variant="rounded" 
-                  width={80} 
-                  height={24} 
-                  sx={{ 
-                    borderRadius: 1,
-                    opacity: 0.5
-                  }} 
-                />
-              </Box>
             </CardContent>
           </Card>
         );

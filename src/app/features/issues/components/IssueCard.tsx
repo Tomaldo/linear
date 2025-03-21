@@ -19,17 +19,29 @@ export function IssueCard({ issue }: IssueCardProps) {
       }}
     >
       <CardContent>
-        <Typography 
-          variant="subtitle1" 
-          component="h3" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 500,
-            mb: 1
-          }}
-        >
-          {issue.title}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Typography 
+            variant="subtitle1" 
+            component="h3" 
+            sx={{ 
+              fontWeight: 500,
+              flex: 1,
+              mr: 2
+            }}
+          >
+            {issue.title}
+          </Typography>
+
+          <Chip
+            label={issue.stateName || 'No Status'}
+            size="small"
+            sx={{
+              height: 24,
+              backgroundColor: 'action.hover',
+              flexShrink: 0
+            }}
+          />
+        </Box>
 
         {issue.description && (
           <Typography 
@@ -52,7 +64,6 @@ export function IssueCard({ issue }: IssueCardProps) {
             direction="row" 
             spacing={1} 
             sx={{ 
-              mb: 2,
               flexWrap: 'wrap',
               gap: 1,
               minHeight: 24 // Match loading skeleton
@@ -82,17 +93,6 @@ export function IssueCard({ issue }: IssueCardProps) {
             ))}
           </Stack>
         )}
-
-        <Box>
-          <Chip
-            label={issue.stateName || 'No Status'}
-            size="small"
-            sx={{
-              height: 24,
-              backgroundColor: 'action.hover'
-            }}
-          />
-        </Box>
       </CardContent>
     </Card>
   );
