@@ -1,24 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Linear Issue Tracker
+
+A modern issue tracking application built with Next.js and Linear API. This application allows you to view and create Linear issues with a beautiful and responsive UI.
+
+## Features
+
+- View Linear issues with their states
+- Create new issues with title and description
+- Modern UI with Material-UI components
+- Proper loading states and error handling
+- Server and client component separation
+- TypeScript for type safety
+
+## Prerequisites
+
+Before running this application, you'll need:
+
+1. A Linear account and API key
+2. Node.js 18+ installed
+3. npm or yarn package manager
+
+## Environment Setup
+
+Create a `.env.local` file in the root directory with your Linear API key:
+
+```bash
+NEXT_PUBLIC_LINEAR_API_KEY=your_linear_api_key_here
+```
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── components/
+│   │   └── common/          # Shared components
+│   ├── features/
+│   │   └── issues/          # Issue-related components
+│   ├── utils/               # Utility functions
+│   ├── theme.ts            # MUI theme configuration
+│   ├── providers.tsx       # App providers
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+```
+
+## Technologies Used
+
+- [Next.js](https://nextjs.org) - React framework
+- [Material-UI](https://mui.com) - UI components
+- [Linear SDK](https://developers.linear.app) - Linear API integration
+- [React Hook Form](https://react-hook-form.com) - Form handling
+- TypeScript - Type safety
 
 ## Learn More
 
@@ -26,8 +77,6 @@ To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
 ## Deploy on Vercel
 
