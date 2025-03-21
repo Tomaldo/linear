@@ -32,6 +32,7 @@ import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sd
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
 import { UI_TEXTS, STATUS_TRANSLATIONS, LABEL_TRANSLATIONS } from '../constants/translations';
+import { getPriorityColor, getStatusColor } from '../utils/colors';
 
 const PRIORITY_LABELS: { [key in IssuePriority]: string } = {
   [IssuePriority.NoPriority]: UI_TEXTS.issues.priority.noPriority,
@@ -114,21 +115,6 @@ export function IssuesDashboard() {
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
   }, [issues, selectedStatuses, selectedPriorities, selectedLabels]);
-
-  const getPriorityColor = (priority: IssuePriority): string => {
-    switch (priority) {
-      case IssuePriority.Urgent:
-        return '#EF4444'; // Red
-      case IssuePriority.High:
-        return '#F59E0B'; // Orange
-      case IssuePriority.Medium:
-        return '#3B82F6'; // Blue
-      case IssuePriority.Low:
-        return '#10B981'; // Green
-      default:
-        return '#6B7280'; // Gray
-    }
-  };
 
   const fetchIssues = async () => {
     setIsLoading(true);
@@ -249,8 +235,14 @@ export function IssuesDashboard() {
                         return status ? (
                           <Chip 
                             key={statusId} 
-                            label={STATUS_TRANSLATIONS[status.name] || status.name} 
-                            size="small" 
+                            label={STATUS_TRANSLATIONS[status.name] || status.name}
+                            size="small"
+                            sx={{
+                              backgroundColor: `${getStatusColor(status.name)}15`,
+                              borderColor: `${getStatusColor(status.name)}30`,
+                              color: getStatusColor(status.name),
+                              border: 1
+                            }}
                           />
                         ) : null;
                       })}
@@ -260,7 +252,14 @@ export function IssuesDashboard() {
                   {statuses.map((status) => (
                     <MenuItem key={status.id} value={status.id}>
                       <Checkbox checked={selectedStatuses.includes(status.id)} />
-                      <ListItemText primary={STATUS_TRANSLATIONS[status.name] || status.name} />
+                      <ListItemText 
+                        primary={STATUS_TRANSLATIONS[status.name] || status.name}
+                        sx={{ 
+                          '& .MuiTypography-root': { 
+                            color: getStatusColor(status.name)
+                          } 
+                        }}
+                      />
                     </MenuItem>
                   ))}
                 </Select>
@@ -281,6 +280,12 @@ export function IssuesDashboard() {
                           key={priority} 
                           label={PRIORITY_LABELS[Number(priority) as IssuePriority]} 
                           size="small" 
+                          sx={{
+                            backgroundColor: `${getPriorityColor(Number(priority) as IssuePriority)}15`,
+                            borderColor: `${getPriorityColor(Number(priority) as IssuePriority)}30`,
+                            color: getPriorityColor(Number(priority) as IssuePriority),
+                            border: 1
+                          }}
                         />
                       ))}
                     </Box>

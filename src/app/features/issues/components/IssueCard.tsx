@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Box, Paper, Typography, Stack, Button, Chip } from '@mui/material';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS, LABEL_TRANSLATIONS } from '../constants/translations';
+import { getPriorityColor, getStatusColor } from '../utils/colors';
 
 interface IssueCardProps {
   issue: IssueWithState;
@@ -14,21 +15,6 @@ export function IssueCard({ issue }: IssueCardProps) {
   const firstLine = issue.description?.split('\n')[0] ?? '';
   const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
   const hasMoreContent = (issue.description && issue.description.includes('\n')) || firstLine.length > 150;
-
-  const getPriorityColor = (priority: IssuePriority): string => {
-    switch (priority) {
-      case IssuePriority.Urgent:
-        return '#EF4444'; // Red
-      case IssuePriority.High:
-        return '#F59E0B'; // Orange
-      case IssuePriority.Medium:
-        return '#3B82F6'; // Blue
-      case IssuePriority.Low:
-        return '#10B981'; // Green
-      default:
-        return '#6B7280'; // Gray
-    }
-  };
 
   return (
     <Paper 
@@ -74,8 +60,10 @@ export function IssueCard({ issue }: IssueCardProps) {
                 label={STATUS_TRANSLATIONS[issue.stateName] || issue.stateName}
                 size="small"
                 sx={{
-                  backgroundColor: 'primary.main',
-                  color: 'white',
+                  backgroundColor: `${getStatusColor(issue.stateName)}15`,
+                  color: getStatusColor(issue.stateName),
+                  borderColor: `${getStatusColor(issue.stateName)}30`,
+                  border: 1,
                   fontWeight: 500,
                   height: '24px'
                 }}
@@ -87,9 +75,9 @@ export function IssueCard({ issue }: IssueCardProps) {
                 label={PRIORITY_LABELS[issue.priority]}
                 size="small"
                 sx={{
-                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, 
+                  backgroundColor: `${getPriorityColor(issue.priority)}15`, 
                   color: getPriorityColor(issue.priority),
-                  borderColor: `${getPriorityColor(issue.priority)}40`, 
+                  borderColor: `${getPriorityColor(issue.priority)}30`, 
                   border: '1px solid',
                   fontWeight: 500,
                   height: '24px'
@@ -103,10 +91,10 @@ export function IssueCard({ issue }: IssueCardProps) {
                 label={LABEL_TRANSLATIONS[label.name] || label.name}
                 size="small"
                 sx={{
-                  backgroundColor: `${label.color}1A`,
+                  backgroundColor: `${label.color}15`,
                   color: label.color,
-                  borderColor: `${label.color}40`,
-                  border: '1px solid',
+                  borderColor: `${label.color}30`,
+                  border: 1,
                   fontWeight: 500,
                   height: '24px'
                 }}
