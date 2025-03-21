@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { Alert, Box, Container, Paper, Stack, Typography, Tabs, Tab, Button } from '@mui/material';
+import { Alert, Box, Container, Paper, Stack, Typography, Tabs, Tab, Button, CircularProgress } from '@mui/material';
 import { CreateIssueForm } from './CreateIssueForm';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
-import { LoadingSpinner } from '@/app/components/common/LoadingSpinner';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,23 +58,52 @@ export function IssuesDashboard() {
     setPriorityTab(newValue);
   };
 
+  const statusesWithIssues = useMemo(() => {
+    return statuses.filter(status => 
+      issues.some(issue => issue.stateId === status.id)
+    );
+  }, [issues, statuses]);
+
+  const prioritiesWithIssues = useMemo(() => {
+    const priorities = new Set(issues.map(issue => issue.priority));
+    return [
+      IssuePriority.NoPriority,
+      IssuePriority.Low,
+      IssuePriority.Medium,
+      IssuePriority.High
+    ].filter(priority => priorities.has(priority));
+  }, [issues]);
+
+  // Reset tab selections if the selected tab no longer exists
+  useEffect(() => {
+    if (statusTab > 0 && statusTab > statusesWithIssues.length) {
+      setStatusTab(0);
+    }
+  }, [statusTab, statusesWithIssues.length]);
+
+  useEffect(() => {
+    if (priorityTab > 0 && priorityTab > prioritiesWithIssues.length) {
+      setPriorityTab(0);
+    }
+  }, [priorityTab, prioritiesWithIssues.length]);
+
   const filteredIssues = useMemo(() => {
     let filtered = issues;
 
     // Filter by status
     if (statusTab !== 0) {
-      const status = statuses[statusTab - 1];
+      const status = statusesWithIssues[statusTab - 1];
       filtered = status ? filtered.filter(issue => issue.stateId === status.id) : [];
     }
 
     // Filter by priority
     if (priorityTab !== 0) {
-      const priority = (priorityTab - 1) as IssuePriority;
+      const priority = prioritiesWithIssues[priorityTab - 1];
       filtered = filtered.filter(issue => issue.priority === priority);
     }
 
     return filtered;
-  }, [issues, statusTab, priorityTab, statuses]);
+  }, [issues, statusTab, priorityTab, statusesWithIssues, prioritiesWithIssues]);
 
   const getPriorityLabel = (priority: IssuePriority): string => {
     switch (priority) {
@@ -252,7 +280,7 @@ export function IssuesDashboard() {
   const renderTabContent = (issues: IssueWithState[], status?: { name: string }) => {
     let priorityLabel: string | null = null;
     if (priorityTab > 0) {
-      const priority = (priorityTab - 1) as IssuePriority;
+      const priority = prioritiesWithIssues[priorityTab - 1];
       priorityLabel = getPriorityLabel(priority);
     }
 
@@ -288,6 +316,12 @@ export function IssuesDashboard() {
     );
   };
 
+  const LoadingSpinner = ({ minHeight = 200 }: { minHeight?: number | string }) => (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight={minHeight}>
+      <CircularProgress />
+    </Box>
+  );
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Stack spacing={4}>
@@ -310,38 +344,44 @@ export function IssuesDashboard() {
           }}
         >
           <Stack>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-              <Tabs 
-                value={statusTab} 
-                onChange={handleStatusTabChange}
-                sx={{
-                  px: 2,
-                  pt: 2
-                }}
-              >
-                <Tab label="All Statuses" />
-                {statuses.map((status, index) => (
-                  <Tab key={status.id} label={status.name} />
-                ))}
-              </Tabs>
-            </Box>
+            {statusesWithIssues.length > 0 && (
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+                <Tabs 
+                  value={statusTab} 
+                  onChange={handleStatusTabChange}
+                  sx={{
+                    px: 2,
+                    pt: 2
+                  }}
+                >
+                  <Tab label="All Statuses" />
+                  {statusesWithIssues.map((status, index) => (
+                    <Tab key={status.id} label={status.name} />
+                  ))}
+                </Tabs>
+              </Box>
+            )}
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
-              <Tabs 
-                value={priorityTab} 
-                onChange={handlePriorityTabChange}
-                sx={{
-                  px: 2,
-                  pt: 2
-                }}
-              >
-                <Tab label="All Priorities" />
-                <Tab label="No Priority" />
-                <Tab label="Low" />
-                <Tab label="Medium" />
-                <Tab label="High" />
-              </Tabs>
-            </Box>
+            {prioritiesWithIssues.length > 0 && (
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+                <Tabs 
+                  value={priorityTab} 
+                  onChange={handlePriorityTabChange}
+                  sx={{
+                    px: 2,
+                    pt: 2
+                  }}
+                >
+                  <Tab label="All Priorities" />
+                  {prioritiesWithIssues.map((priority) => (
+                    <Tab 
+                      key={priority} 
+                      label={getPriorityLabel(priority)} 
+                    />
+                  ))}
+                </Tabs>
+              </Box>
+            )}
 
             {error && (
               <Alert 
@@ -366,7 +406,7 @@ export function IssuesDashboard() {
               </Box>
             ) : (
               <Box>
-                {renderTabContent(filteredIssues, statusTab > 0 ? statuses[statusTab - 1] : undefined)}
+                {renderTabContent(filteredIssues, statusTab > 0 ? statusesWithIssues[statusTab - 1] : undefined)}
               </Box>
             )}
           </Stack>
