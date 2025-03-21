@@ -25,6 +25,19 @@ export function IssuesDashboard() {
     try {
       setIsLoading(true);
       const client = getLinearClient();
+      
+      // First verify we can access the user
+      const { nodes: users } = await client.users({
+        filter: {
+          email: { eq: DEMO_USER_EMAIL }
+        }
+      });
+      
+      if (!users.length) {
+        throw new Error(`User ${DEMO_USER_EMAIL} not found. Please verify the user exists in Linear.`);
+      }
+
+      // Then fetch issues
       const { nodes } = await client.issues();
       
       // Create a map to store unique states
@@ -50,7 +63,17 @@ export function IssuesDashboard() {
       setIssueStates(Array.from(stateMap.values()));
       setError(null);
     } catch (err) {
-      setError('Failed to fetch issues. Please check your Linear API key.');
+      if (err instanceof Error) {
+        if (err.message.includes('API key')) {
+          setError('Invalid or missing Linear API key. Please check your environment configuration.');
+        } else if (err.message.includes('permission')) {
+          setError('Insufficient permissions. Please verify your Linear API key has the necessary access.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Failed to fetch issues. Please check your Linear configuration.');
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -61,27 +84,49 @@ export function IssuesDashboard() {
     fetchIssues();
   }, []);
 
+  const ISSUE_AUTHOR = 'Hanne Eliassen';
+  const DEMO_USER_EMAIL = 'demo@dkp.no';
+
   const handleCreateIssue = async (data: { title: string; description: string }) => {
     setIsCreating(true);
     setError(null);
     try {
       const client = getLinearClient();
+      
+      // First get the user by email
+      const { nodes: users } = await client.users({
+        filter: {
+          email: { eq: DEMO_USER_EMAIL }
+        }
+      });
+      const user = users[0];
+
+      if (!user) {
+        throw new Error(`User ${DEMO_USER_EMAIL} not found. Please check if the user exists in Linear.`);
+      }
+
+      // Then get the team
       const { nodes: teams } = await client.teams();
       const team = teams[0];
       
       if (!team) {
-        throw new Error('No team found');
+        throw new Error('No team found. Please create a team in Linear first.');
       }
 
       await client.createIssue({
         teamId: team.id,
-        title: data.title,
+        title: `${ISSUE_AUTHOR} - ${data.title}`,
         description: data.description,
+        createAsUser: user.id,
       });
 
       await fetchIssues();
     } catch (err) {
-      setError('Failed to create issue. Please check your Linear API key and permissions.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to create issue. Please check your Linear API key and permissions.');
+      }
       console.error(err);
     } finally {
       setIsCreating(false);
