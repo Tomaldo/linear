@@ -3,15 +3,30 @@
 import { TextField, TextFieldProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-// Create a styled TextField following our theme patterns
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputLabel-root': {
     color: theme.palette.text.secondary,
+    fontSize: theme.typography.body2.fontSize,
   },
   '& .MuiOutlinedInput-root': {
-    '&:hover fieldset': {
+    transition: theme.transitions.create(['border-color', 'box-shadow']),
+    '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
       borderColor: theme.palette.primary.main,
     },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.primary.main,
+      borderWidth: 2,
+    },
+    '&.Mui-disabled .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.action.disabledBackground,
+    },
+  },
+  '& .MuiInputBase-input': {
+    fontSize: theme.typography.body2.fontSize,
+  },
+  '& .MuiFormHelperText-root': {
+    marginLeft: 0,
+    fontSize: theme.typography.caption.fontSize,
   },
 }));
 
@@ -21,6 +36,14 @@ export const FormTextField = (props: TextFieldProps) => {
       variant="outlined"
       size="medium"
       {...props}
+      FormHelperTextProps={{
+        ...props.FormHelperTextProps,
+        sx: {
+          ...(props.error && {
+            color: 'error.main',
+          }),
+        },
+      }}
     />
   );
 };

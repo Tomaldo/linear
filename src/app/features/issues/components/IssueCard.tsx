@@ -1,43 +1,95 @@
 'use client';
 
-import { Paper, Typography, Stack, Chip } from '@mui/material';
+import { Paper, Typography, Stack, Chip, Fade } from '@mui/material';
 import { Issue } from '@linear/sdk';
+import { memo } from 'react';
 
 interface IssueCardProps {
-  issue: Issue;
-  state: string;
+  issue: Issue & { stateName?: string };
 }
 
-export const IssueCard = ({ issue, state }: IssueCardProps) => {
+const IssueCard = memo(({ issue }: IssueCardProps) => {
+  const getStateColor = (stateName?: string) => {
+    if (!stateName) return undefined;
+    
+    const lowerState = stateName.toLowerCase();
+    if (lowerState.includes('done') || lowerState.includes('completed')) {
+      return 'success';
+    }
+    if (lowerState.includes('in progress') || lowerState.includes('active')) {
+      return 'primary';
+    }
+    if (lowerState.includes('blocked') || lowerState.includes('canceled')) {
+      return 'error';
+    }
+    if (lowerState.includes('backlog') || lowerState.includes('todo')) {
+      return 'default';
+    }
+    return 'default';
+  };
+
   return (
-    <Paper 
-      variant="outlined" 
-      sx={{ 
-        p: 2,
-        '&:hover': {
-          bgcolor: 'action.hover',
-          transition: 'background-color 0.2s'
-        }
-      }}
-    >
-      <Stack spacing={1}>
-        <Typography variant="subtitle1" fontWeight="medium">
-          {issue.title}
-        </Typography>
-        {issue.description && (
-          <Typography variant="body2" color="text.secondary">
-            {issue.description}
+    <Fade in timeout={300}>
+      <Paper 
+        variant="outlined" 
+        sx={{ 
+          p: 2,
+          '&:hover': {
+            bgcolor: 'action.hover',
+            transition: theme => theme.transitions.create('background-color', {
+              duration: theme.transitions.duration.shorter
+            })
+          }
+        }}
+      >
+        <Stack spacing={1.5}>
+          <Typography 
+            variant="subtitle1" 
+            fontWeight="medium"
+            sx={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical'
+            }}
+          >
+            {issue.title}
           </Typography>
-        )}
-        <Chip 
-          label={state}
-          size="small"
-          sx={{ 
-            alignSelf: 'flex-start',
-            bgcolor: state.toLowerCase() === 'completed' ? 'success.light' : 'default'
-          }}
-        />
-      </Stack>
-    </Paper>
+          {issue.description && (
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}
+            >
+              {issue.description}
+            </Typography>
+          )}
+          {issue.stateName && (
+            <Chip 
+              label={issue.stateName}
+              size="small"
+              color={getStateColor(issue.stateName)}
+              sx={{ 
+                alignSelf: 'flex-start',
+                fontWeight: 500,
+                minWidth: 80,
+                justifyContent: 'center'
+              }}
+            />
+          )}
+        </Stack>
+      </Paper>
+    </Fade>
   );
-};
+});
+
+IssueCard.displayName = 'IssueCard';
+
+export { IssueCard };

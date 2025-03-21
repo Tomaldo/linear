@@ -1,9 +1,10 @@
 'use client';
 
-import { Paper, Button, Stack } from '@mui/material';
+import { Paper, Stack } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { FormTextField } from '@/app/components/common/FormTextField';
 import { LoadingButton } from '@mui/lab';
+import AddIcon from '@mui/icons-material/Add';
 
 interface CreateIssueFormData {
   title: string;
@@ -46,10 +47,12 @@ export const CreateIssueForm = ({ onSubmit, isLoading }: CreateIssueFormProps) =
               <FormTextField
                 {...field}
                 label="Title"
+                placeholder="Enter issue title"
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message}
                 fullWidth
                 disabled={isLoading}
+                autoFocus
               />
             )}
           />
@@ -60,6 +63,7 @@ export const CreateIssueForm = ({ onSubmit, isLoading }: CreateIssueFormProps) =
               <FormTextField
                 {...field}
                 label="Description"
+                placeholder="Enter issue description"
                 multiline
                 rows={4}
                 error={!!fieldState.error}
@@ -73,7 +77,9 @@ export const CreateIssueForm = ({ onSubmit, isLoading }: CreateIssueFormProps) =
             type="submit"
             variant="contained"
             loading={isLoading}
-            sx={{ alignSelf: 'flex-start' }}
+            loadingPosition="start"
+            startIcon={<AddIcon />}
+            sx={{ alignSelf: 'flex-start', px: 3 }}
           >
             Create Issue
           </LoadingButton>
