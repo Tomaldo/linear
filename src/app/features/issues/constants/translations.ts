@@ -23,17 +23,17 @@ export const LABEL_TRANSLATIONS: Record<string, string> = {
   'Bug': 'Feil',
   'Feature': 'Funksjonalitet',
   'Improvement': 'Forbedring',
-  'Documentation': 'Dokumentasjon',
-  'Design': 'Design',
-  'Testing': 'Testing',
-  'Security': 'Sikkerhet',
-  'Performance': 'Ytelse',
-  'Technical Debt': 'Teknisk gjeld',
-  'Research': 'Undersøkelse',
-  'Discussion': 'Diskusjon',
-  'Question': 'Spørsmål',
-  'Enhancement': 'Forbedring',
-  'Maintenance': 'Vedlikehold'
+  //'Documentation': 'Dokumentasjon',
+  //'Design': 'Design',
+  //'Testing': 'Testing',
+  //'Security': 'Sikkerhet',
+  //'Performance': 'Ytelse',
+  //'Technical Debt': 'Teknisk gjeld',
+  //'Research': 'Undersøkelse',
+  //'Discussion': 'Diskusjon',
+  //'Question': 'Spørsmål',
+  //'Enhancement': 'Forbedring',
+  //'Maintenance': 'Vedlikehold'
 };
 
 export const UI_TEXTS = {
