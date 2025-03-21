@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   Alert, 
   Box, 
@@ -39,6 +40,7 @@ const PRIORITY_LABELS: { [key in IssuePriority]: string } = {
 };
 
 export function IssuesDashboard() {
+  const searchParams = useSearchParams();
   const [issues, setIssues] = useState<IssueWithState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -195,7 +197,7 @@ export function IssuesDashboard() {
 
       await client.createIssue({
         teamId: team.id,
-        title: `${ISSUE_AUTHOR} - ${data.title}`,
+        title: `${searchParams.get('author') || ISSUE_AUTHOR} - ${data.title}`,
         description: data.description,
         priority: data.priority
       });
