@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
+import { IssueCard } from './IssueCard';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
@@ -216,87 +217,6 @@ export function IssuesDashboard() {
     fetchIssues();
   }, []);
 
-  const renderIssueCard = (issue: IssueWithState) => (
-    <Paper 
-      key={issue.id} 
-      elevation={1}
-      sx={{ 
-        p: 3,
-        '&:hover': {
-          boxShadow: 3
-        }
-      }}
-    >
-      <Stack spacing={2}>
-        <Stack spacing={1}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            {issue.title}
-          </Typography>
-
-          {issue.description && (
-            <Typography variant="body2" color="text.secondary">
-              {issue.description}
-            </Typography>
-          )}
-
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-            {issue.stateName && (
-              <Chip
-                label={issue.stateName}
-                size="small"
-                sx={{
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  fontWeight: 500
-                }}
-              />
-            )}
-            
-            {issue.priority !== undefined && (
-              <Chip
-                label={getPriorityLabel(issue.priority)}
-                size="small"
-                sx={{
-                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, // 10% opacity
-                  color: getPriorityColor(issue.priority),
-                  borderColor: `${getPriorityColor(issue.priority)}40`, // 25% opacity
-                  border: '1px solid',
-                  fontWeight: 500
-                }}
-              />
-            )}
-          </Stack>
-
-          {issue.labels.length > 0 && (
-            <Stack 
-              direction="row" 
-              spacing={1} 
-              sx={{ 
-                flexWrap: 'wrap',
-                gap: 1
-              }}
-            >
-              {issue.labels.map(label => (
-                <Chip
-                  key={label.id}
-                  label={label.name}
-                  size="small"
-                  sx={{
-                    backgroundColor: `${label.color}1A`, // 10% opacity
-                    color: label.color,
-                    borderColor: `${label.color}40`, // 25% opacity
-                    border: '1px solid',
-                    fontWeight: 500
-                  }}
-                />
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      </Stack>
-    </Paper>
-  );
-
   const LoadingSpinner = ({ minHeight = 200 }: { minHeight?: number | string }) => (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight={minHeight}>
       <CircularProgress />
@@ -408,7 +328,9 @@ export function IssuesDashboard() {
               <Box sx={{ p: 3 }}>
                 <Stack spacing={2}>
                   {filteredIssues.length > 0 ? (
-                    filteredIssues.map(issue => renderIssueCard(issue))
+                    filteredIssues.map(issue => (
+                      <IssueCard key={issue.id} issue={issue} />
+                    ))
                   ) : (
                     <Typography color="text.secondary" align="center">
                       No issues found matching the selected filters.

@@ -1,137 +1,137 @@
 'use client';
 
-import { Card, CardContent, Typography, Chip, Stack, Box } from '@mui/material';
+import { useState } from 'react';
+import { Paper, Stack, Typography, Chip, Button } from '@mui/material';
 import { IssueWithState, IssuePriority, PRIORITY_LABELS } from '@/app/features/issues/types';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import RemoveIcon from '@mui/icons-material/Remove';
 
 interface IssueCardProps {
   issue: IssueWithState;
 }
 
 export function IssueCard({ issue }: IssueCardProps) {
-  const getPriorityIcon = (priority: IssuePriority | undefined) => {
-    const priorityValue = priority ?? IssuePriority.NoPriority;
-    
-    if (priorityValue === IssuePriority.NoPriority) {
-      return <RemoveIcon fontSize="small" />;
-    }
+  const [isExpanded, setIsExpanded] = useState(false);
+  const firstLine = issue.description?.split('\n')[0] ?? '';
+  const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
+  const hasMoreContent = (issue.description && issue.description.includes('\n')) || firstLine.length > 150;
 
-    return (
-      <SignalCellularAltIcon 
-        fontSize="small" 
-        sx={{ 
-          opacity: (5 - priorityValue) / 4, // Higher priority = higher opacity
-          transform: priorityValue === IssuePriority.Urgent ? 'rotate(180deg)' : undefined 
-        }} 
-      />
-    );
+  const getPriorityColor = (priority: IssuePriority): string => {
+    switch (priority) {
+      case IssuePriority.Urgent:
+        return '#EF4444'; // Red
+      case IssuePriority.High:
+        return '#F59E0B'; // Orange
+      case IssuePriority.Medium:
+        return '#3B82F6'; // Blue
+      case IssuePriority.Low:
+        return '#10B981'; // Green
+      default:
+        return '#6B7280'; // Gray
+    }
+  };
+
+  const getPriorityLabel = (priority: IssuePriority): string => {
+    switch (priority) {
+      case IssuePriority.Urgent:
+        return 'Urgent';
+      case IssuePriority.High:
+        return 'High';
+      case IssuePriority.Medium:
+        return 'Medium';
+      case IssuePriority.Low:
+        return 'Low';
+      default:
+        return 'No Priority';
+    }
   };
 
   return (
-    <Card 
-      variant="outlined"
+    <Paper 
+      elevation={1}
       sx={{ 
+        p: 3,
         '&:hover': {
-          boxShadow: 1,
-          transition: 'box-shadow 0.2s'
+          boxShadow: 3
         }
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography 
-            variant="subtitle1" 
-            component="h3" 
-            sx={{ 
-              fontWeight: 500,
-              flex: 1,
-              mr: 2
-            }}
-          >
+      <Stack spacing={2}>
+        <Stack spacing={1}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
             {issue.title}
           </Typography>
 
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-            {/* Priority chip */}
-            <Chip
-              icon={getPriorityIcon(issue.priority)}
-              label={PRIORITY_LABELS[issue.priority ?? IssuePriority.NoPriority]}
-              size="small"
-              sx={{
-                height: 24,
-                backgroundColor: 'action.hover',
-                '& .MuiChip-icon': {
-                  color: 'inherit'
-                }
-              }}
-            />
+          {issue.description && (
+            <>
+              <Typography variant="body2" color="text.secondary">
+                {isExpanded ? issue.description : truncatedFirstLine}
+              </Typography>
+              {hasMoreContent && (
+                <Button
+                  size="small"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  sx={{ alignSelf: 'flex-start' }}
+                >
+                  {isExpanded ? 'Show Less' : 'Show More'}
+                </Button>
+              )}
+            </>
+          )}
 
-            {/* Status chip */}
-            <Chip
-              label={issue.stateName || 'No Status'}
-              size="small"
-              sx={{
-                height: 24,
-                backgroundColor: 'action.hover'
-              }}
-            />
-          </Stack>
-        </Box>
-
-        {issue.description && (
-          <Typography 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ 
-              mb: 2,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}
-          >
-            {issue.description}
-          </Typography>
-        )}
-
-        {issue.labels && issue.labels.length > 0 && (
-          <Stack 
-            direction="row" 
-            spacing={1} 
-            sx={{ 
-              flexWrap: 'wrap',
-              gap: 1,
-              minHeight: 24 // Match loading skeleton
-            }}
-          >
-            {issue.labels.map((label) => (
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+            {issue.stateName && (
               <Chip
-                key={label.id}
-                label={label.name}
+                label={issue.stateName}
                 size="small"
                 sx={{
-                  height: 24,
-                  backgroundColor: `${label.color}26`, // 15% opacity
-                  border: `1px solid ${label.color}4D`, // 30% opacity
-                  color: label.color,
-                  fontWeight: 500,
-                  borderRadius: '12px',
-                  maxWidth: 160,
-                  '.MuiChip-label': {
-                    px: 1.5,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  fontWeight: 500
                 }}
               />
-            ))}
+            )}
+            
+            {issue.priority !== undefined && (
+              <Chip
+                label={PRIORITY_LABELS[issue.priority]}
+                size="small"
+                sx={{
+                  backgroundColor: `${getPriorityColor(issue.priority)}1A`, // 10% opacity
+                  color: getPriorityColor(issue.priority),
+                  borderColor: `${getPriorityColor(issue.priority)}40`, // 25% opacity
+                  border: '1px solid',
+                  fontWeight: 500
+                }}
+              />
+            )}
           </Stack>
-        )}
-      </CardContent>
-    </Card>
+
+          {issue.labels.length > 0 && (
+            <Stack 
+              direction="row" 
+              spacing={1} 
+              sx={{ 
+                flexWrap: 'wrap',
+                gap: 1
+              }}
+            >
+              {issue.labels.map(label => (
+                <Chip
+                  key={label.id}
+                  label={label.name}
+                  size="small"
+                  sx={{
+                    backgroundColor: `${label.color}1A`, // 10% opacity
+                    color: label.color,
+                    borderColor: `${label.color}40`, // 25% opacity
+                    border: '1px solid',
+                    fontWeight: 500
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </Stack>
+    </Paper>
   );
 }
-
-IssueCard.displayName = 'IssueCard';
