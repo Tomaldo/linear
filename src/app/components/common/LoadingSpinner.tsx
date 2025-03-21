@@ -2,9 +2,13 @@
 
 import { Box, CircularProgress } from '@mui/material';
 
-export const LoadingSpinner = () => {
+interface LoadingSpinnerProps {
+  minHeight?: string | number;
+}
+
+export const LoadingSpinner = ({ minHeight = '100vh' }: LoadingSpinnerProps) => {
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight={minHeight}>
       <CircularProgress />
     </Box>
   );

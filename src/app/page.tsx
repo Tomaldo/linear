@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/app/components/common/LoadingSpinner';
 
 // Import IssuesDashboard dynamically to avoid SSR issues
 const IssuesDashboard = dynamic(
-  () => import('./features/issues/components/IssuesDashboard'),
+  () => import('./features/issues/components/IssuesDashboard').then(mod => mod.IssuesDashboard),
   { 
     ssr: false,
     loading: () => <LoadingSpinner />
