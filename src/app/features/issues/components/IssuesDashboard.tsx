@@ -337,9 +337,9 @@ export function IssuesDashboard() {
   );
 
   return (
-    <Box>
+    <Box sx={{ pt: 2 }}>
       <Stack spacing={2}>
-        <Box>
+        <Box sx={{ px: 2 }}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
@@ -483,21 +483,23 @@ export function IssuesDashboard() {
             <LoadingSpinner minHeight={200} />
           </Box>
         ) : (
-          <Grid container spacing={2}>
-            {filteredIssues.map((issue) => (
-              <Grid item xs={12} sm={6} md={4} key={issue.id}>
-                <IssueCard 
-                  issue={issue} 
-                  onStatusChange={handleStatusChangeIssue}
-                  onPriorityChange={handlePriorityChangeIssue}
-                  onLabelToggle={handleLabelToggle}
-                  onEdit={handleEditIssue}
-                  availableStatuses={statuses}
-                  availableLabels={availableLabels}
-                />
-              </Grid>
-            ))}
-          </Grid>
+          <Box sx={{ px: 2 }}>
+            <Grid container spacing={2}>
+              {filteredIssues.map((issue) => (
+                <Grid item xs={12} sm={6} md={4} key={issue.id}>
+                  <IssueCard 
+                    issue={issue} 
+                    onStatusChange={handleStatusChangeIssue}
+                    onPriorityChange={handlePriorityChangeIssue}
+                    onLabelToggle={handleLabelToggle}
+                    onEdit={handleEditIssue}
+                    availableStatuses={statuses}
+                    availableLabels={availableLabels}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         )}
       </Stack>
 
