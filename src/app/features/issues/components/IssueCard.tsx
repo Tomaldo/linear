@@ -12,7 +12,8 @@ import {
   Skeleton,
   Menu,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  useTheme
 } from '@mui/material';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS, LABEL_TRANSLATIONS } from '../constants/translations';
@@ -43,7 +44,9 @@ interface IssueCardProps {
   isLoading?: boolean;
   onStatusChange?: (issueId: string, newStatusId: string) => Promise<void>;
   onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
+  onLabelToggle?: (issueId: string, labelId: string, isAdding: boolean) => Promise<void>;
   availableStatuses?: Array<{ id: string; name: string }>;
+  availableLabels?: Array<{ id: string; name: string; color: string }>;
 }
 
 const IssueCardSkeleton = () => (
@@ -59,12 +62,23 @@ const IssueCardSkeleton = () => (
   </Paper>
 );
 
-export function IssueCard({ issue, isLoading, onStatusChange, onPriorityChange, availableStatuses }: IssueCardProps) {
+export function IssueCard({ 
+  issue, 
+  isLoading, 
+  onStatusChange, 
+  onPriorityChange, 
+  onLabelToggle,
+  availableStatuses,
+  availableLabels 
+}: IssueCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null);
   const [priorityAnchorEl, setPriorityAnchorEl] = useState<null | HTMLElement>(null);
+  const [labelAnchorEl, setLabelAnchorEl] = useState<null | HTMLElement>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
+  const [updatingLabelIds, setUpdatingLabelIds] = useState<Set<string>>(new Set());
+  const theme = useTheme();
   const firstLine = issue?.description?.split('\n')[0] ?? '';
   const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
   const hasMoreContent = (issue?.description && issue.description.includes('\n')) || firstLine.length > 150;
@@ -83,6 +97,14 @@ export function IssueCard({ issue, isLoading, onStatusChange, onPriorityChange, 
 
   const handlePriorityClose = () => {
     setPriorityAnchorEl(null);
+  };
+
+  const handleLabelClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    setLabelAnchorEl(event.currentTarget);
+  };
+
+  const handleLabelClose = () => {
+    setLabelAnchorEl(null);
   };
 
   const handleStatusChange = async (newStatusId: string) => {
@@ -105,6 +127,26 @@ export function IssueCard({ issue, isLoading, onStatusChange, onPriorityChange, 
       } finally {
         setIsPriorityUpdating(false);
         handlePriorityClose();
+      }
+    }
+  };
+
+  const handleLabelToggle = async (labelId: string) => {
+    if (onLabelToggle) {
+      const isCurrentlyApplied = issue.labels.some(label => label.id === labelId);
+      setUpdatingLabelIds(prev => {
+        const next = new Set(prev);
+        next.add(labelId);
+        return next;
+      });
+      try {
+        await onLabelToggle(issue.id, labelId, !isCurrentlyApplied);
+      } finally {
+        setUpdatingLabelIds(prev => {
+          const next = new Set(prev);
+          next.delete(labelId);
+          return next;
+        });
       }
     }
   };
@@ -248,13 +290,61 @@ export function IssueCard({ issue, isLoading, onStatusChange, onPriorityChange, 
                   </>
                 )}
 
+                <Box>
+                  <StyledChip
+                    label="+"
+                    size="small"
+                    bgColor={theme.palette.grey[500]}
+                    onClick={handleLabelClick}
+                    aria-haspopup="true"
+                    aria-expanded={Boolean(labelAnchorEl)}
+                    aria-label="Add or remove labels"
+                  />
+                  <Menu
+                    anchorEl={labelAnchorEl}
+                    open={Boolean(labelAnchorEl)}
+                    onClose={handleLabelClose}
+                  >
+                    {availableLabels?.map((label) => {
+                      const isApplied = issue.labels.some(l => l.id === label.id);
+                      const isUpdating = updatingLabelIds.has(label.id);
+                      return (
+                        <MenuItem
+                          key={label.id}
+                          onClick={() => handleLabelToggle(label.id)}
+                          selected={isApplied}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            {isUpdating && <CircularProgress size={16} />}
+                            <StyledChip
+                              label={LABEL_TRANSLATIONS[label.name] || label.name}
+                              size="small"
+                              bgColor={label.color}
+                            />
+                          </Stack>
+                        </MenuItem>
+                      );
+                    })}
+                  </Menu>
+                </Box>
+
                 {issue.labels.map(label => (
                   <StyledChip
                     key={label.id}
-                    label={LABEL_TRANSLATIONS[label.name] || label.name}
+                    label={
+                      updatingLabelIds.has(label.id) ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CircularProgress size={16} />
+                          {LABEL_TRANSLATIONS[label.name] || label.name}
+                        </Box>
+                      ) : (
+                        LABEL_TRANSLATIONS[label.name] || label.name
+                      )
+                    }
                     size="small"
                     bgColor={label.color}
                     aria-label={`Label: ${LABEL_TRANSLATIONS[label.name] || label.name}`}
+                    onDelete={() => handleLabelToggle(label.id)}
                   />
                 ))}
               </Stack>

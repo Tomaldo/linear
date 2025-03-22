@@ -253,6 +253,44 @@ export function IssuesDashboard() {
     }
   };
 
+  const handleLabelToggle = async (issueId: string, labelId: string, isAdding: boolean) => {
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      const issue = await client.issue(issueId);
+      
+      // Get current label IDs
+      const labelConnection = await issue.labels();
+      const currentLabelIds = labelConnection.nodes.map((label: { id: string }) => label.id);
+      
+      // Update labels based on whether we're adding or removing
+      const newLabelIds = isAdding
+        ? [...currentLabelIds, labelId]
+        : currentLabelIds.filter((id: string) => id !== labelId);
+      
+      await issue.update({ labelIds: newLabelIds });
+      
+      // Update local state
+      setIssues(prevIssues => 
+        prevIssues.map(prevIssue => {
+          if (prevIssue.id === issueId) {
+            const labels = isAdding
+              ? [...prevIssue.labels, availableLabels.find(l => l.id === labelId)!]
+              : prevIssue.labels.filter(label => label.id !== labelId);
+            
+            return {
+              ...prevIssue,
+              labels
+            };
+          }
+          return prevIssue;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating issue labels:', error);
+      setError('Failed to update issue labels. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchIssues();
   }, []);
@@ -417,7 +455,9 @@ export function IssuesDashboard() {
                   issue={issue} 
                   onStatusChange={handleStatusChangeIssue}
                   onPriorityChange={handlePriorityChangeIssue}
+                  onLabelToggle={handleLabelToggle}
                   availableStatuses={statuses}
+                  availableLabels={availableLabels}
                 />
               </Grid>
             ))}
