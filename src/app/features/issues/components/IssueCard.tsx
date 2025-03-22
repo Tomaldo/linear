@@ -26,19 +26,19 @@ import { LinearClient } from '@linear/sdk';
 import { EditIssueForm } from './EditIssueForm';
 
 interface StyledChipProps {
-  bgColor: string;
+  bgcolor: string;
 }
 
-const StyledChip = styled(Chip)<StyledChipProps>(({ theme, bgColor }) => ({
-  backgroundColor: `${bgColor}15`,
-  color: bgColor,
-  borderColor: `${bgColor}30`,
+const StyledChip = styled(Chip)<StyledChipProps>(({ theme, bgcolor }) => ({
+  backgroundColor: `${bgcolor}15`,
+  color: bgcolor,
+  borderColor: `${bgcolor}30`,
   border: 1,
   fontWeight: 500,
   height: '24px',
   cursor: 'pointer',
   '&:hover': {
-    backgroundColor: `${bgColor}25`,
+    backgroundColor: `${bgcolor}25`,
   }
 }));
 
@@ -249,7 +249,7 @@ export function IssueCard({
                         )
                       }
                       size="small"
-                      bgColor={getStatusColor(issue.stateName)}
+                      bgcolor={getStatusColor(issue.stateName)}
                       aria-label={`Status: ${STATUS_TRANSLATIONS[issue.stateName] || issue.stateName}`}
                       onClick={handleStatusClick}
                       aria-haspopup="true"
@@ -269,7 +269,7 @@ export function IssueCard({
                           <StyledChip
                             label={STATUS_TRANSLATIONS[status.name] || status.name}
                             size="small"
-                            bgColor={getStatusColor(status.name)}
+                            bgcolor={getStatusColor(status.name)}
                           />
                         </MenuItem>
                       ))}
@@ -291,7 +291,7 @@ export function IssueCard({
                         )
                       }
                       size="small"
-                      bgColor={getPriorityColor(issue.priority)}
+                      bgcolor={getPriorityColor(issue.priority)}
                       aria-label={`Priority: ${PRIORITY_LABELS[issue.priority]}`}
                       onClick={handlePriorityClick}
                       aria-haspopup="true"
@@ -311,7 +311,7 @@ export function IssueCard({
                           <StyledChip
                             label={label}
                             size="small"
-                            bgColor={getPriorityColor(Number(priority) as IssuePriority)}
+                            bgcolor={getPriorityColor(Number(priority) as IssuePriority)}
                           />
                         </MenuItem>
                       ))}
@@ -323,7 +323,7 @@ export function IssueCard({
                   <StyledChip
                     label="+"
                     size="small"
-                    bgColor={theme.palette.grey[500]}
+                    bgcolor={theme.palette.grey[500]}
                     onClick={handleLabelClick}
                     aria-haspopup="true"
                     aria-expanded={Boolean(labelAnchorEl)}
@@ -348,7 +348,7 @@ export function IssueCard({
                             <StyledChip
                               label={LABEL_TRANSLATIONS[label.name] || label.name}
                               size="small"
-                              bgColor={label.color}
+                              bgcolor={label.color}
                             />
                           </Stack>
                         </MenuItem>
@@ -371,7 +371,7 @@ export function IssueCard({
                       )
                     }
                     size="small"
-                    bgColor={label.color}
+                    bgcolor={label.color}
                     aria-label={`Label: ${LABEL_TRANSLATIONS[label.name] || label.name}`}
                     onDelete={() => handleLabelToggle(label.id)}
                   />
