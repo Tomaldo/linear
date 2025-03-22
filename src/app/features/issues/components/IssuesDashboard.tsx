@@ -291,6 +291,16 @@ export function IssuesDashboard() {
     }
   };
 
+  // Set default selected statuses when statuses are loaded
+  useEffect(() => {
+    if (statuses.length > 0) {
+      const defaultStatuses = statuses
+        .filter(status => ['Backlog', 'Todo', 'In Progress'].includes(status.name))
+        .map(status => status.id);
+      setSelectedStatuses(defaultStatuses);
+    }
+  }, [statuses]);
+
   useEffect(() => {
     fetchIssues();
   }, []);
