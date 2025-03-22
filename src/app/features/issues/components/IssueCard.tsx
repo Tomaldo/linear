@@ -42,6 +42,7 @@ interface IssueCardProps {
   issue: IssueWithState;
   isLoading?: boolean;
   onStatusChange?: (issueId: string, newStatusId: string) => Promise<void>;
+  onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
   availableStatuses?: Array<{ id: string; name: string }>;
 }
 
@@ -58,10 +59,12 @@ const IssueCardSkeleton = () => (
   </Paper>
 );
 
-export function IssueCard({ issue, isLoading, onStatusChange, availableStatuses }: IssueCardProps) {
+export function IssueCard({ issue, isLoading, onStatusChange, onPriorityChange, availableStatuses }: IssueCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null);
+  const [priorityAnchorEl, setPriorityAnchorEl] = useState<null | HTMLElement>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
   const firstLine = issue?.description?.split('\n')[0] ?? '';
   const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
   const hasMoreContent = (issue?.description && issue.description.includes('\n')) || firstLine.length > 150;
@@ -74,6 +77,14 @@ export function IssueCard({ issue, isLoading, onStatusChange, availableStatuses 
     setStatusAnchorEl(null);
   };
 
+  const handlePriorityClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    setPriorityAnchorEl(event.currentTarget);
+  };
+
+  const handlePriorityClose = () => {
+    setPriorityAnchorEl(null);
+  };
+
   const handleStatusChange = async (newStatusId: string) => {
     if (onStatusChange) {
       setIsStatusUpdating(true);
@@ -82,6 +93,18 @@ export function IssueCard({ issue, isLoading, onStatusChange, availableStatuses 
       } finally {
         setIsStatusUpdating(false);
         handleStatusClose();
+      }
+    }
+  };
+
+  const handlePriorityChange = async (newPriority: number) => {
+    if (onPriorityChange) {
+      setIsPriorityUpdating(true);
+      try {
+        await onPriorityChange(issue.id, newPriority);
+      } finally {
+        setIsPriorityUpdating(false);
+        handlePriorityClose();
       }
     }
   };
@@ -184,12 +207,45 @@ export function IssueCard({ issue, isLoading, onStatusChange, availableStatuses 
                 )}
                 
                 {issue.priority !== undefined && (
-                  <StyledChip
-                    label={PRIORITY_LABELS[issue.priority]}
-                    size="small"
-                    bgColor={getPriorityColor(issue.priority)}
-                    aria-label={`Priority: ${PRIORITY_LABELS[issue.priority]}`}
-                  />
+                  <>
+                    <StyledChip
+                      label={
+                        isPriorityUpdating ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CircularProgress size={16} />
+                            {PRIORITY_LABELS[issue.priority]}
+                          </Box>
+                        ) : (
+                          PRIORITY_LABELS[issue.priority]
+                        )
+                      }
+                      size="small"
+                      bgColor={getPriorityColor(issue.priority)}
+                      aria-label={`Priority: ${PRIORITY_LABELS[issue.priority]}`}
+                      onClick={handlePriorityClick}
+                      aria-haspopup="true"
+                      aria-expanded={Boolean(priorityAnchorEl)}
+                    />
+                    <Menu
+                      anchorEl={priorityAnchorEl}
+                      open={Boolean(priorityAnchorEl)}
+                      onClose={handlePriorityClose}
+                    >
+                      {Object.entries(PRIORITY_LABELS).map(([priority, label]) => (
+                        <MenuItem
+                          key={priority}
+                          onClick={() => handlePriorityChange(Number(priority))}
+                          selected={Number(priority) === issue.priority}
+                        >
+                          <StyledChip
+                            label={label}
+                            size="small"
+                            bgColor={getPriorityColor(Number(priority) as IssuePriority)}
+                          />
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </>
                 )}
 
                 {issue.labels.map(label => (

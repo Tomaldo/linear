@@ -229,6 +229,30 @@ export function IssuesDashboard() {
     }
   };
 
+  const handlePriorityChangeIssue = async (issueId: string, newPriority: number) => {
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      const issue = await client.issue(issueId);
+      await issue.update({ priority: newPriority });
+      
+      // Update local state
+      setIssues(prevIssues => 
+        prevIssues.map(prevIssue => {
+          if (prevIssue.id === issueId) {
+            return {
+              ...prevIssue,
+              priority: newPriority
+            };
+          }
+          return prevIssue;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating issue priority:', error);
+      setError('Failed to update issue priority. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchIssues();
   }, []);
@@ -392,6 +416,7 @@ export function IssuesDashboard() {
                 <IssueCard 
                   issue={issue} 
                   onStatusChange={handleStatusChangeIssue}
+                  onPriorityChange={handlePriorityChangeIssue}
                   availableStatuses={statuses}
                 />
               </Grid>
