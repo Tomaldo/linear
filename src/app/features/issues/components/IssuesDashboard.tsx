@@ -203,6 +203,32 @@ export function IssuesDashboard() {
     }
   };
 
+  const handleStatusChangeIssue = async (issueId: string, newStatusId: string) => {
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      const issue = await client.issue(issueId);
+      await issue.update({ stateId: newStatusId });
+      
+      // Update local state
+      setIssues(prevIssues => 
+        prevIssues.map(prevIssue => {
+          if (prevIssue.id === issueId) {
+            const newState = statuses.find(s => s.id === newStatusId);
+            return {
+              ...prevIssue,
+              stateId: newStatusId,
+              stateName: newState?.name || prevIssue.stateName
+            };
+          }
+          return prevIssue;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating issue status:', error);
+      setError('Failed to update issue status. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchIssues();
   }, []);
@@ -360,17 +386,17 @@ export function IssuesDashboard() {
             <LoadingSpinner minHeight={200} />
           </Box>
         ) : (
-          <Stack spacing={2}>
-            {filteredIssues.length > 0 ? (
-              filteredIssues.map(issue => (
-                <IssueCard key={issue.id} issue={issue} />
-              ))
-            ) : (
-              <Typography color="text.secondary" align="center">
-                {UI_TEXTS.issues.noIssuesFound}
-              </Typography>
-            )}
-          </Stack>
+          <Grid container spacing={2}>
+            {filteredIssues.map((issue) => (
+              <Grid item xs={12} sm={6} md={4} key={issue.id}>
+                <IssueCard 
+                  issue={issue} 
+                  onStatusChange={handleStatusChangeIssue}
+                  availableStatuses={statuses}
+                />
+              </Grid>
+            ))}
+          </Grid>
         )}
       </Stack>
 
