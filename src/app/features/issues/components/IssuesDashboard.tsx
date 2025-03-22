@@ -291,6 +291,31 @@ export function IssuesDashboard() {
     }
   };
 
+  const handleEditIssue = async (issueId: string, title: string, description: string) => {
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      const issue = await client.issue(issueId);
+      await issue.update({ title, description });
+
+      // Update local state
+      setIssues(prevIssues => 
+        prevIssues.map(prevIssue => {
+          if (prevIssue.id === issueId) {
+            return {
+              ...prevIssue,
+              title,
+              description
+            };
+          }
+          return prevIssue;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating issue:', error);
+      setError('Failed to update issue. Please try again.');
+    }
+  };
+
   // Set default selected statuses when statuses are loaded
   useEffect(() => {
     if (statuses.length > 0) {
@@ -466,6 +491,7 @@ export function IssuesDashboard() {
                   onStatusChange={handleStatusChangeIssue}
                   onPriorityChange={handlePriorityChangeIssue}
                   onLabelToggle={handleLabelToggle}
+                  onEdit={handleEditIssue}
                   availableStatuses={statuses}
                   availableLabels={availableLabels}
                 />

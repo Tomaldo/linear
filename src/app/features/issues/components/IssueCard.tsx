@@ -13,14 +13,17 @@ import {
   Menu,
   MenuItem,
   CircularProgress,
-  useTheme
+  useTheme,
+  IconButton
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS, LABEL_TRANSLATIONS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
 import { ErrorBoundary } from '@/app/components/common/ErrorBoundary';
 import { getLinearClient } from '@/app/utils/linear-client';
 import { LinearClient } from '@linear/sdk';
+import { EditIssueForm } from './EditIssueForm';
 
 interface StyledChipProps {
   bgColor: string;
@@ -45,6 +48,7 @@ interface IssueCardProps {
   onStatusChange?: (issueId: string, newStatusId: string) => Promise<void>;
   onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
   onLabelToggle?: (issueId: string, labelId: string, isAdding: boolean) => Promise<void>;
+  onEdit?: (issueId: string, title: string, description: string) => Promise<void>;
   availableStatuses?: Array<{ id: string; name: string }>;
   availableLabels?: Array<{ id: string; name: string; color: string }>;
 }
@@ -68,6 +72,7 @@ export function IssueCard({
   onStatusChange, 
   onPriorityChange, 
   onLabelToggle,
+  onEdit,
   availableStatuses,
   availableLabels 
 }: IssueCardProps) {
@@ -78,6 +83,7 @@ export function IssueCard({
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
   const [updatingLabelIds, setUpdatingLabelIds] = useState<Set<string>>(new Set());
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const theme = useTheme();
   const firstLine = issue?.description?.split('\n')[0] ?? '';
   const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
@@ -159,44 +165,67 @@ export function IssueCard({
     <ErrorBoundary>
       <Suspense fallback={<IssueCardSkeleton />}>
         <Paper 
-          variant="outlined" 
+          elevation={1} 
           sx={{ 
-            borderRadius: 1,
+            p: 2,
             '&:hover': {
-              borderColor: 'primary.main',
+              boxShadow: 3,
               bgcolor: 'action.hover'
-            }
+            },
+            transition: theme.transitions.create(['box-shadow', 'background-color'], {
+              duration: theme.transitions.duration.short
+            })
           }}
           role="article"
           aria-label={`Issue: ${issue.title}`}
         >
-          <Box sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle1" fontWeight={500} component="h3">
-                {issue.title}
-              </Typography>
+          <Stack spacing={2}>
+            <Box>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                <Typography 
+                  variant="h6" 
+                  component="h3" 
+                  sx={{ 
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    wordBreak: 'break-word',
+                    flex: 1
+                  }}
+                >
+                  {issue.title}
+                </Typography>
+                <IconButton 
+                  size="small" 
+                  onClick={() => setIsEditDialogOpen(true)}
+                  aria-label="Edit issue"
+                  sx={{ 
+                    ml: 1,
+                    '&:hover': {
+                      bgcolor: 'action.selected'
+                    }
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Stack>
 
-              {issue.description && (
-                <>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary"
-                    sx={{ whiteSpace: 'pre-wrap' }}
-                  >
-                    {isExpanded ? issue.description : truncatedFirstLine}
-                  </Typography>
-                  {hasMoreContent && (
-                    <Button
-                      size="small"
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      sx={{ alignSelf: 'flex-start', p: 0 }}
-                      aria-expanded={isExpanded}
-                      aria-controls={`issue-description-${issue.id}`}
-                    >
-                      {isExpanded ? UI_TEXTS.issues.showLess : UI_TEXTS.issues.showMore}
-                    </Button>
-                  )}
-                </>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ whiteSpace: 'pre-wrap' }}
+              >
+                {isExpanded ? issue.description : truncatedFirstLine}
+              </Typography>
+              {hasMoreContent && (
+                <Button
+                  size="small"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  sx={{ alignSelf: 'flex-start', p: 0 }}
+                  aria-expanded={isExpanded}
+                  aria-controls={`issue-description-${issue.id}`}
+                >
+                  {isExpanded ? UI_TEXTS.issues.showLess : UI_TEXTS.issues.showMore}
+                </Button>
               )}
 
               <Stack 
@@ -348,8 +377,14 @@ export function IssueCard({
                   />
                 ))}
               </Stack>
-            </Stack>
-          </Box>
+            </Box>
+          </Stack>
+          <EditIssueForm 
+            issue={issue}
+            open={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSubmit={onEdit || (() => Promise.resolve())}
+          />
         </Paper>
       </Suspense>
     </ErrorBoundary>
