@@ -8,9 +8,6 @@ import {
   Stack, 
   Typography, 
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   Fab,
   FormControl,
   InputLabel,
@@ -47,6 +44,7 @@ export function IssuesDashboard() {
   const [issues, setIssues] = useState<IssueWithState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
@@ -172,7 +170,7 @@ export function IssuesDashboard() {
 
   const handleCreateIssue = async (data: { title: string; description: string; priority: IssuePriority }) => {
     setError(null);
-    setIsLoading(true);
+    setIsCreating(true);
     try {
       const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
       const teamsResponse = await client.teams();
@@ -199,7 +197,7 @@ export function IssuesDashboard() {
       setError(errorMessage);
       console.error('Error creating issue:', err);
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
   };
 
@@ -515,24 +513,12 @@ export function IssuesDashboard() {
         <AddIcon />
       </Fab>
 
-      <Dialog 
-        open={isCreateDialogOpen} 
+      <CreateIssueForm 
+        onSubmit={handleCreateIssue}
+        isLoading={isCreating}
+        open={isCreateDialogOpen}
         onClose={handleCloseCreateDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {UI_TEXTS.issues.createIssue}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <CreateIssueForm
-              onSubmit={handleCreateIssue}
-              isLoading={isLoading}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
+      />
     </Box>
   );
 }
