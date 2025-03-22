@@ -38,7 +38,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
     e.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      setError('Title is required');
+      setError(UI_TEXTS.errors.required);
       return;
     }
     setError(null);
@@ -79,7 +79,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
       <form onSubmit={handleSubmit}>
         <DialogTitle sx={{ m: 0, p: 2, pb: 1 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">Edit Issue</Typography>
+            <Typography variant="h6">{UI_TEXTS.issues.form.edit}</Typography>
             <IconButton
               aria-label="close"
               onClick={handleClose}
@@ -103,7 +103,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (error === 'Title is required' && e.target.value.trim()) {
+                if (error === UI_TEXTS.errors.required && e.target.value.trim()) {
                   setError(null);
                 }
               }}
@@ -111,7 +111,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
               required
               disabled={isSubmitting}
               error={!title.trim()}
-              helperText={!title.trim() ? 'Title is required' : ' '}
+              helperText={!title.trim() ? UI_TEXTS.errors.required : ' '}
               autoFocus
               inputProps={{
                 maxLength: 255,
@@ -145,7 +145,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
             disabled={isSubmitting}
             size="large"
           >
-            Cancel
+            {UI_TEXTS.issues.form.cancel}
           </Button>
           <LoadingButton 
             type="submit" 
@@ -154,7 +154,7 @@ export function EditIssueForm({ issue, open, onClose, onSubmit }: EditIssueFormP
             disabled={!title.trim()}
             size="large"
           >
-            Save Changes
+            {isSubmitting ? UI_TEXTS.issues.form.editing : UI_TEXTS.issues.form.save}
           </LoadingButton>
         </DialogActions>
       </form>

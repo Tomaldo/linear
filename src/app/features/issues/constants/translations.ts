@@ -61,7 +61,11 @@ export const UI_TEXTS = {
       title: 'Tittel',
       description: 'Beskrivelse',
       creating: 'Oppretter...',
-      create: 'Opprett sak'
+      create: 'Opprett sak',
+      edit: 'Rediger sak',
+      editing: 'Redigerer...',
+      save: 'Lagre',
+      cancel: 'Avbryt'
     }
   },
   errors: {
