@@ -14,7 +14,8 @@ import {
   MenuItem,
   CircularProgress,
   useTheme,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
@@ -24,6 +25,8 @@ import { ErrorBoundary } from '@/app/components/common/ErrorBoundary';
 import { getLinearClient } from '@/app/utils/linear-client';
 import { LinearClient } from '@linear/sdk';
 import { EditIssueForm } from './EditIssueForm';
+import { formatDistanceToNow } from 'date-fns'; 
+import { nb } from 'date-fns/locale';
 
 interface StyledChipProps {
   bgcolor: string;
@@ -181,32 +184,15 @@ export function IssueCard({
         >
           <Stack spacing={2}>
             <Box>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-                <Typography 
-                  variant="h6" 
-                  component="h3" 
-                  sx={{ 
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    wordBreak: 'break-word',
-                    flex: 1
-                  }}
-                >
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6" component="h3" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                   {issue.title}
                 </Typography>
-                <IconButton 
-                  size="small" 
-                  onClick={() => setIsEditDialogOpen(true)}
-                  aria-label="Edit issue"
-                  sx={{ 
-                    ml: 1,
-                    '&:hover': {
-                      bgcolor: 'action.selected'
-                    }
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title={new Date(issue.createdAt).toLocaleString('nb-NO')}>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true, locale: nb })}
+                  </Typography>
+                </Tooltip>
               </Stack>
 
               <Typography 

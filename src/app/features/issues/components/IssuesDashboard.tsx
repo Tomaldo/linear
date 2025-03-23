@@ -152,7 +152,8 @@ export function IssuesDashboard() {
             stateId: state?.id ?? null,
             stateName: state?.name ?? null,
             labels,
-            priority: issue.priority as IssuePriority
+            priority: issue.priority as IssuePriority,
+            createdAt: issue.createdAt.toISOString()
           };
         })
       );

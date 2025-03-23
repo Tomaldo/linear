@@ -13,6 +13,7 @@ export interface IssueWithState extends Pick<Issue, 'id'> {
   stateName: string | null;
   labels: IssueLabel[];
   priority?: IssuePriority;
+  createdAt: string;
 }
 
 export enum IssuePriority {
