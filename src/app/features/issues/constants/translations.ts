@@ -11,7 +11,7 @@ export const PRIORITY_LABELS: Record<IssuePriority, string> = {
 // Map Linear status names to Norwegian translations
 export const STATUS_TRANSLATIONS: Record<string, string> = {
   'Backlog': 'Backlog',
-  'Todo': 'Å gjøre',
+  'Todo': 'Neste',
   'In Progress': 'Under arbeid',
   'Done': 'Ferdig',
   'Canceled': 'Kansellert',
