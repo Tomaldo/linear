@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
-import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS, LABEL_TRANSLATIONS } from '../constants/translations';
+import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
 import { ErrorBoundary } from '@/app/components/common/ErrorBoundary';
 import { getLinearClient } from '@/app/utils/linear-client';
@@ -360,7 +360,7 @@ export function IssueCard({
                           <Stack direction="row" alignItems="center" spacing={1}>
                             {isUpdating && <CircularProgress size={16} />}
                             <StyledChip
-                              label={LABEL_TRANSLATIONS[label.name] || label.name}
+                              label={label.name}
                               size="small"
                               bgcolor={label.color}
                             />
@@ -378,15 +378,15 @@ export function IssueCard({
                       updatingLabelIds.has(label.id) ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <CircularProgress size={16} />
-                          {LABEL_TRANSLATIONS[label.name] || label.name}
+                          {label.name}
                         </Box>
                       ) : (
-                        LABEL_TRANSLATIONS[label.name] || label.name
+                        label.name
                       )
                     }
                     size="small"
                     bgcolor={label.color}
-                    aria-label={`Label: ${LABEL_TRANSLATIONS[label.name] || label.name}`}
+                    aria-label={`Label: ${label.name}`}
                     onDelete={() => handleLabelToggle(label.id)}
                   />
                 ))}

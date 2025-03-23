@@ -29,7 +29,7 @@ import { IssueCard } from './IssueCard';
 import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
-import { UI_TEXTS, STATUS_TRANSLATIONS, LABEL_TRANSLATIONS } from '../constants/translations';
+import { UI_TEXTS, STATUS_TRANSLATIONS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
 
 const PRIORITY_LABELS: { [key in IssuePriority]: string } = {
@@ -51,6 +51,7 @@ export function IssuesDashboard() {
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [availableLabels, setAvailableLabels] = useState<IssueLabel[]>([]);
 
   const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
   const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
@@ -66,16 +67,6 @@ export function IssuesDashboard() {
   const handleLabelChange = (event: SelectChangeEvent<string[]>) => {
     setSelectedLabels(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
   };
-
-  const availableLabels = useMemo(() => {
-    const labelMap = new Map<string, IssueLabel>();
-    issues.forEach(issue => {
-      issue.labels.forEach(label => {
-        labelMap.set(label.id, label);
-      });
-    });
-    return Array.from(labelMap.values());
-  }, [issues]);
 
   const filteredIssues = useMemo(() => {
     let filtered = [...issues];
@@ -133,6 +124,14 @@ export function IssuesDashboard() {
       setStatuses(states.map((state: WorkflowState) => ({ 
         id: state.id, 
         name: state.name 
+      })));
+
+      const labelsResponse = await team.labels();
+      const labels = (labelsResponse as Connection<IssueLabel>).nodes;
+      setAvailableLabels(labels.map(label => ({
+        id: label.id,
+        name: label.name,
+        color: label.color
       })));
 
       const issuesResponse = await team.issues();
@@ -470,7 +469,7 @@ export function IssuesDashboard() {
                         return label ? (
                           <Chip 
                             key={labelId} 
-                            label={LABEL_TRANSLATIONS[label.name] || label.name} 
+                            label={label.name} 
                             size="small" 
                           />
                         ) : null;
@@ -481,7 +480,7 @@ export function IssuesDashboard() {
                   {availableLabels.map((label) => (
                     <MenuItem key={label.id} value={label.id}>
                       <Checkbox checked={selectedLabels.includes(label.id)} />
-                      <ListItemText primary={LABEL_TRANSLATIONS[label.name] || label.name} />
+                      <ListItemText primary={label.name} />
                     </MenuItem>
                   ))}
                 </Select>
