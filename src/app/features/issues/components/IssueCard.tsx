@@ -25,6 +25,7 @@ import { ErrorBoundary } from '@/app/components/common/ErrorBoundary';
 import { getLinearClient } from '@/app/utils/linear-client';
 import { LinearClient } from '@linear/sdk';
 import { EditIssueForm } from './EditIssueForm';
+import { IssueComments } from './IssueComments';
 import { formatDistanceToNow } from 'date-fns'; 
 import { nb } from 'date-fns/locale';
 
@@ -52,6 +53,7 @@ interface IssueCardProps {
   onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
   onLabelToggle?: (issueId: string, labelId: string, isAdding: boolean) => Promise<void>;
   onEdit?: (issueId: string, title: string, description: string) => Promise<void>;
+  onAddComment?: (issueId: string, body: string) => Promise<void>;
   availableStatuses?: Array<{ id: string; name: string }>;
   availableLabels?: Array<{ id: string; name: string; color: string }>;
 }
@@ -76,6 +78,7 @@ export function IssueCard({
   onPriorityChange, 
   onLabelToggle,
   onEdit,
+  onAddComment,
   availableStatuses,
   availableLabels 
 }: IssueCardProps) {
@@ -87,10 +90,13 @@ export function IssueCard({
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
   const [updatingLabelIds, setUpdatingLabelIds] = useState<Set<string>>(new Set());
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const theme = useTheme();
   const firstLine = issue?.description?.split('\n')[0] ?? '';
   const truncatedFirstLine = firstLine.length > 150 ? `${firstLine.slice(0, 150)}...` : firstLine;
-  const hasMoreContent = (issue?.description && issue.description.includes('\n')) || firstLine.length > 150;
+  const hasMoreContent = (issue?.description && issue.description.includes('\n')) || 
+                        firstLine.length > 150 || 
+                        (issue.comments && issue.comments.length > 0);
 
   const handleStatusClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setStatusAnchorEl(event.currentTarget);
@@ -188,32 +194,54 @@ export function IssueCard({
                 <Typography variant="h6" component="h3" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                   {issue.title}
                 </Typography>
-                <Tooltip title={new Date(issue.createdAt).toLocaleString('nb-NO')}>
-                  <Typography variant="caption" color="text.secondary">
-                    {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true, locale: nb })}
-                  </Typography>
-                </Tooltip>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  {onEdit && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setIsEditDialogOpen(true)}
+                      aria-label="Edit issue"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                  <Tooltip title={new Date(issue.createdAt).toLocaleString('nb-NO')}>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true, locale: nb })}
+                    </Typography>
+                  </Tooltip>
+                </Stack>
               </Stack>
 
               <Typography 
                 variant="body2" 
-                color="text.secondary"
-                sx={{ whiteSpace: 'pre-wrap' }}
+                color="text.secondary" 
+                sx={{ 
+                  mt: 1,
+                  cursor: 'pointer',
+                  whiteSpace: 'pre-wrap'
+                }}
+                onClick={() => setIsExpanded(!isExpanded)}
               >
                 {isExpanded ? issue.description : truncatedFirstLine}
+                {!isExpanded && (
+                  <Button size="small" sx={{ ml: 1 }}>
+                    {hasMoreContent ? UI_TEXTS.issues.showMore : 'Vis kommentarer'}
+                  </Button>
+                )}
               </Typography>
-              {hasMoreContent && (
-                <Button
-                  size="small"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  sx={{ alignSelf: 'flex-start', p: 0 }}
-                  aria-expanded={isExpanded}
-                  aria-controls={`issue-description-${issue.id}`}
-                >
-                  {isExpanded ? UI_TEXTS.issues.showLess : UI_TEXTS.issues.showMore}
-                </Button>
-              )}
 
+              {isExpanded && (
+                <>
+                  {issue.comments && (
+                    <IssueComments
+                      issueId={issue.id}
+                      comments={issue.comments}
+                      onAddComment={onAddComment || (async () => {})}
+                      isLoading={isLoadingComments}
+                    />
+                  )}
+                </>
+              )}
               <Stack 
                 direction="row" 
                 spacing={1} 
@@ -365,12 +393,18 @@ export function IssueCard({
               </Stack>
             </Box>
           </Stack>
-          <EditIssueForm 
-            issue={issue}
-            open={isEditDialogOpen}
-            onClose={() => setIsEditDialogOpen(false)}
-            onSubmit={onEdit || (() => Promise.resolve())}
-          />
+          {isEditDialogOpen && (
+            <EditIssueForm
+              issue={issue}
+              onSave={async (title: string, description: string) => {
+                if (onEdit) {
+                  await onEdit(issue.id, title, description);
+                }
+                setIsEditDialogOpen(false);
+              }}
+              onClose={() => setIsEditDialogOpen(false)}
+            />
+          )}
         </Paper>
       </Suspense>
     </ErrorBoundary>

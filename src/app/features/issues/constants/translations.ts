@@ -46,26 +46,40 @@ export const UI_TEXTS = {
     label: 'Etikett'
   },
   issues: {
-    noIssuesFound: 'Ingen saker funnet med valgte filtre.',
+    title: 'Saker',
     showMore: 'Vis mer',
-    showLess: 'Vis mindre',
-    createIssue: 'Opprett sak',
+    noIssues: 'Ingen saker funnet',
+    form: {
+      title: 'Tittel',
+      description: 'Beskrivelse',
+      priority: 'Prioritet',
+      submit: 'Lagre',
+      submitting: 'Lagrer...',
+      cancel: 'Avbryt',
+      create: 'Opprett sak',
+      edit: 'Rediger sak'
+    },
+    actions: {
+      createIssue: 'Opprett sak',
+      editIssue: 'Rediger sak',
+      showMore: 'Vis mer',
+      showLess: 'Vis mindre',
+      addComment: 'Legg til kommentar'
+    },
+    labels: {
+      noLabels: 'Ingen etiketter',
+      addLabel: 'Legg til etikett'
+    },
+    status: {
+      change: 'Endre status'
+    },
     priority: {
+      change: 'Endre prioritet',
       noPriority: 'Ingen prioritet',
       urgent: 'Haster',
       high: 'Høy',
       medium: 'Medium',
       low: 'Lav'
-    },
-    form: {
-      title: 'Tittel',
-      description: 'Beskrivelse',
-      creating: 'Oppretter...',
-      create: 'Opprett sak',
-      edit: 'Rediger sak',
-      editing: 'Redigerer...',
-      save: 'Lagre',
-      cancel: 'Avbryt'
     }
   },
   errors: {

@@ -20,7 +20,8 @@ import {
   useTheme,
   useMediaQuery,
   Checkbox,
-  ListItemText
+  ListItemText,
+  TextField
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -145,6 +146,19 @@ export function IssuesDashboard() {
             name: label.name,
             color: label.color
           }));
+          const commentsResponse = await issue.comments();
+          const comments = await Promise.all(commentsResponse.nodes.map(async comment => {
+            const user = await comment.user;
+            return {
+              id: comment.id,
+              body: comment.body,
+              createdAt: comment.createdAt.toISOString(),
+              user: user ? {
+                name: user.name || user.email,
+                email: user.email
+              } : null
+            };
+          }));
           return {
             id: issue.id,
             title: issue.title,
@@ -153,7 +167,8 @@ export function IssuesDashboard() {
             stateName: state?.name ?? null,
             labels,
             priority: issue.priority as IssuePriority,
-            createdAt: issue.createdAt.toISOString()
+            createdAt: issue.createdAt.toISOString(),
+            comments
           };
         })
       );
@@ -199,6 +214,24 @@ export function IssuesDashboard() {
       console.error('Error creating issue:', err);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleAddComment = async (issueId: string, body: string) => {
+    setError(null);
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      await client.createComment({
+        issueId,
+        body
+      });
+      await fetchIssues();
+    } catch (err) {
+      const errorMessage = err instanceof Error 
+        ? `Failed to add comment: ${err.message}`
+        : 'Failed to add comment. Please try again later.';
+      setError(errorMessage);
+      console.error('Error adding comment:', err);
     }
   };
 
@@ -492,6 +525,7 @@ export function IssuesDashboard() {
                     onPriorityChange={handlePriorityChangeIssue}
                     onLabelToggle={handleLabelToggle}
                     onEdit={handleEditIssue}
+                    onAddComment={handleAddComment}
                     availableStatuses={statuses}
                     availableLabels={availableLabels}
                   />

@@ -14,6 +14,7 @@ export interface IssueWithState extends Pick<Issue, 'id'> {
   labels: IssueLabel[];
   priority?: IssuePriority;
   createdAt: string;
+  comments?: IssueComment[];
 }
 
 export enum IssuePriority {
@@ -31,3 +32,13 @@ export const PRIORITY_LABELS: Record<IssuePriority, string> = {
   [IssuePriority.Medium]: 'Medium',
   [IssuePriority.Low]: 'Low'
 };
+
+export interface IssueComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  user: {
+    name: string;
+    email: string;
+  } | null;
+}
