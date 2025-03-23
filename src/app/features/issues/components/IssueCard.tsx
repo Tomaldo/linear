@@ -15,9 +15,11 @@ import {
   CircularProgress,
   useTheme,
   IconButton,
-  Tooltip
+  Tooltip,
+  Link as MuiLink
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import LinkIcon from '@mui/icons-material/Link';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
@@ -47,7 +49,7 @@ const StyledChip = styled(Chip)<StyledChipProps>(({ theme, bgcolor }) => ({
 }));
 
 interface IssueCardProps {
-  issue: IssueWithState;
+  issue: IssueWithState & { memberLink?: string | null };
   isLoading?: boolean;
   onStatusChange?: (issueId: string, newStatusId: string) => Promise<void>;
   onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
@@ -203,6 +205,19 @@ export function IssueCard({
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
+                  )}
+                  {issue.memberLink !== null && issue.memberLink !== undefined && (
+                    <Tooltip title="Åpne medlemslink">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        href={issue.memberLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <LinkIcon />
+                      </IconButton>
+                    </Tooltip>
                   )}
                   <Tooltip title={new Date(issue.createdAt).toLocaleString('nb-NO')}>
                     <Typography variant="caption" color="text.secondary">

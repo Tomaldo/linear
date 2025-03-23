@@ -26,9 +26,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
 import { IssueCard } from './IssueCard';
-import { LinearClient, Team, Issue, WorkflowState, Connection } from '@linear/sdk';
+import { LinearClient, Team, Issue, WorkflowState, Connection, IssuePayload } from '@linear/sdk';
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
-import { ISSUE_AUTHOR } from '@/app/features/issues/constants';
+import { ISSUE_AUTHOR } from '../constants';
 import { UI_TEXTS, STATUS_TRANSLATIONS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
 
@@ -158,6 +158,13 @@ export function IssuesDashboard() {
               } : null
             };
           }));
+
+          // Get attachments to find member link
+          const attachmentsResponse = await issue.attachments();
+          const memberLink = attachmentsResponse.nodes.find(
+            attachment => attachment.title === 'Medlemslink'
+          )?.url || null;
+
           return {
             id: issue.id,
             title: issue.title,
@@ -167,7 +174,8 @@ export function IssuesDashboard() {
             labels,
             priority: issue.priority as IssuePriority,
             createdAt: issue.createdAt.toISOString(),
-            comments
+            comments,
+            memberLink
           };
         })
       );
@@ -183,7 +191,12 @@ export function IssuesDashboard() {
     }
   };
 
-  const handleCreateIssue = async (data: { title: string; description: string; priority: IssuePriority }) => {
+  const handleCreateIssue = async (data: { 
+    title: string; 
+    description: string; 
+    priority: IssuePriority;
+    addMemberLink?: boolean;
+  }) => {
     setError(null);
     setIsCreating(true);
     try {
@@ -196,12 +209,32 @@ export function IssuesDashboard() {
         throw new Error('Team configuration error: No team found in Linear.');
       }
 
-      await client.createIssue({
+      const author = searchParams.get('author') || ISSUE_AUTHOR;
+      const memberId = searchParams.get('id');
+      const issuePayload = await client.createIssue({
         teamId: team.id,
-        title: `${searchParams.get('author') || ISSUE_AUTHOR} - ${data.title}`,
+        title: `${author} - ${data.title}`,
         description: data.description,
         priority: data.priority
       });
+
+      // Get the actual issue ID from the response
+      const issue = await issuePayload.issue;
+      const issueId = issue ? issue.id : null;
+      
+      if (data.addMemberLink && issueId && memberId) {
+        const url = `https://saksbehandler.opensjon.no/members/${memberId}`;
+        try {
+          await client.createAttachment({
+            issueId,
+            url,
+            title: 'Medlemslink'
+          });
+        } catch (attachmentError) {
+          console.error('Error creating attachment:', attachmentError);
+          // Don't throw the error since the issue was still created successfully
+        }
+      }
 
       await fetchIssues();
       handleCloseCreateDialog();

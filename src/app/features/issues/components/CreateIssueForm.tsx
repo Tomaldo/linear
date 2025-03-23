@@ -13,7 +13,9 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Typography
+  Typography,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { LoadingButton } from '@mui/lab';
@@ -27,7 +29,12 @@ const FormTextField = forwardRef<HTMLInputElement, TextFieldProps>((props, ref) 
 });
 
 interface CreateIssueFormProps {
-  onSubmit: (data: { title: string; description: string; priority: IssuePriority }) => Promise<void>;
+  onSubmit: (data: { 
+    title: string; 
+    description: string; 
+    priority: IssuePriority;
+    addMemberLink?: boolean;
+  }) => Promise<void>;
   isLoading: boolean;
   open: boolean;
   onClose: () => void;
@@ -38,11 +45,17 @@ export function CreateIssueForm({ onSubmit, isLoading, open, onClose }: CreateIs
     defaultValues: {
       title: '',
       description: '',
-      priority: IssuePriority.NoPriority
+      priority: IssuePriority.NoPriority,
+      addMemberLink: false
     }
   });
 
-  const onSubmitForm = async (data: { title: string; description: string; priority: IssuePriority }) => {
+  const onSubmitForm = async (data: { 
+    title: string; 
+    description: string; 
+    priority: IssuePriority;
+    addMemberLink: boolean;
+  }) => {
     try {
       await onSubmit(data);
       reset();
@@ -137,6 +150,23 @@ export function CreateIssueForm({ onSubmit, isLoading, open, onClose }: CreateIs
                     disabled={isLoading}
                   />
                 </FormControl>
+              )}
+            />
+
+            <Controller
+              name="addMemberLink"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={value}
+                      onChange={onChange}
+                      disabled={isLoading}
+                    />
+                  }
+                  label="Legg til medlemslink"
+                />
               )}
             />
           </Stack>
