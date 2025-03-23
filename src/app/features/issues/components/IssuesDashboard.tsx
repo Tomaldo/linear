@@ -351,7 +351,7 @@ export function IssuesDashboard() {
   useEffect(() => {
     if (statuses.length > 0) {
       const defaultStatuses = statuses
-        .filter(status => ['Backlog', 'Todo', 'In Progress'].includes(status.name))
+        .filter(status => ['Todo', 'In Progress'].includes(status.name))
         .map(status => status.id);
       setSelectedStatuses(defaultStatuses);
     }
