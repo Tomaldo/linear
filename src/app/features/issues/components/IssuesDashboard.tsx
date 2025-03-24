@@ -22,7 +22,8 @@ import {
   Checkbox,
   ListItemText,
   TextField,
-  Avatar
+  Avatar,
+  FormControlLabel
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -55,6 +56,7 @@ export function IssuesDashboard() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [availableLabels, setAvailableLabels] = useState<IssueLabel[]>([]);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
 
   const handleOpenCreateDialog = () => setIsCreateDialogOpen(true);
   const handleCloseCreateDialog = () => setIsCreateDialogOpen(false);
@@ -108,6 +110,14 @@ export function IssuesDashboard() {
       });
     }
 
+    // Filter by author (show only mine)
+    if (showOnlyMine) {
+      const currentAuthor = searchParams.get('author') || ISSUE_AUTHOR;
+      filtered = filtered.filter(issue => 
+        issue.title.startsWith(`${currentAuthor} - `)
+      );
+    }
+
     // Sort by priority (Urgent -> High -> Medium -> Low -> No Priority)
     // In Linear API: Urgent = 1, High = 2, Medium = 3, Low = 4, NoPriority = 0
     return filtered.sort((a, b) => {
@@ -122,7 +132,7 @@ export function IssuesDashboard() {
 
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
-  }, [issues, selectedStatuses, selectedPriorities, selectedLabels, selectedAssignees]);
+  }, [issues, selectedStatuses, selectedPriorities, selectedLabels, selectedAssignees, showOnlyMine]);
 
   const fetchIssues = async () => {
     setIsLoading(true);
@@ -644,6 +654,18 @@ export function IssuesDashboard() {
               </FormControl>
             </Grid>
           </Grid>
+        </Box>
+
+        <Box sx={{ px: 2 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={showOnlyMine}
+                onChange={(e) => setShowOnlyMine(e.target.checked)}
+              />
+            }
+            label="Vis kun mine"
+          />
         </Box>
 
         {error && (
