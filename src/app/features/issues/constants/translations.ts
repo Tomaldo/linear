@@ -25,7 +25,8 @@ export const UI_TEXTS = {
     allLabels: 'Alle etiketter',
     status: 'Status',
     priority: 'Prioritet',
-    label: 'Etikett'
+    label: 'Etikett',
+    assignee: 'Tildelt til'
   },
   issues: {
     title: 'Saker',

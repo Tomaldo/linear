@@ -21,7 +21,8 @@ import {
   useMediaQuery,
   Checkbox,
   ListItemText,
-  TextField
+  TextField,
+  Avatar
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
@@ -51,6 +52,7 @@ export function IssuesDashboard() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [availableLabels, setAvailableLabels] = useState<IssueLabel[]>([]);
 
@@ -67,6 +69,10 @@ export function IssuesDashboard() {
 
   const handleLabelChange = (event: SelectChangeEvent<string[]>) => {
     setSelectedLabels(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
+  };
+
+  const handleAssigneeFilterChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedAssignees(typeof event.target.value === 'string' ? [event.target.value] : event.target.value);
   };
 
   const filteredIssues = useMemo(() => {
@@ -91,6 +97,17 @@ export function IssuesDashboard() {
       );
     }
 
+    // Filter by assignee
+    if (selectedAssignees.length > 0) {
+      filtered = filtered.filter(issue => {
+        // If "unassigned" is selected (we'll use "none" as the special value)
+        if (selectedAssignees.includes('none')) {
+          if (issue.assigneeId === null) return true;
+        }
+        return selectedAssignees.includes(issue.assigneeId || '');
+      });
+    }
+
     // Sort by priority (Urgent -> High -> Medium -> Low -> No Priority)
     // In Linear API: Urgent = 1, High = 2, Medium = 3, Low = 4, NoPriority = 0
     return filtered.sort((a, b) => {
@@ -105,7 +122,7 @@ export function IssuesDashboard() {
 
       return getSortOrder(priorityB) - getSortOrder(priorityA);
     });
-  }, [issues, selectedStatuses, selectedPriorities, selectedLabels]);
+  }, [issues, selectedStatuses, selectedPriorities, selectedLabels, selectedAssignees]);
 
   const fetchIssues = async () => {
     setIsLoading(true);
@@ -444,7 +461,7 @@ export function IssuesDashboard() {
       <Stack spacing={2}>
         <Box sx={{ px: 2 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
                 <InputLabel id="status-select-label">{UI_TEXTS.filters.status}</InputLabel>
                 <Select
@@ -491,7 +508,7 @@ export function IssuesDashboard() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
                 <InputLabel>{UI_TEXTS.filters.priority}</InputLabel>
                 <Select
@@ -526,7 +543,7 @@ export function IssuesDashboard() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth>
                 <InputLabel>{UI_TEXTS.filters.label}</InputLabel>
                 <Select
@@ -553,6 +570,61 @@ export function IssuesDashboard() {
                     <MenuItem key={label.id} value={label.id}>
                       <Checkbox checked={selectedLabels.includes(label.id)} />
                       <ListItemText primary={label.name} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth>
+                <InputLabel>{UI_TEXTS.filters.assignee}</InputLabel>
+                <Select
+                  multiple
+                  value={selectedAssignees}
+                  onChange={handleAssigneeFilterChange}
+                  label={UI_TEXTS.filters.assignee}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((assigneeId) => {
+                        if (assigneeId === 'none') {
+                          return (
+                            <Chip 
+                              key="none" 
+                              label={UI_TEXTS.issues.unassigned}
+                              size="small"
+                            />
+                          );
+                        }
+                        const assignee = teamMembers.find(m => m.id === assigneeId);
+                        return assignee ? (
+                          <Chip 
+                            key={assigneeId} 
+                            label={assignee.name}
+                            size="small"
+                            avatar={
+                              <Avatar sx={{ width: 24, height: 24 }}>
+                                {assignee.name.charAt(0)}
+                              </Avatar>
+                            }
+                          />
+                        ) : null;
+                      })}
+                    </Box>
+                  )}
+                >
+                  <MenuItem value="none">
+                    <Checkbox checked={selectedAssignees.includes('none')} />
+                    <ListItemText primary={UI_TEXTS.issues.unassigned} />
+                  </MenuItem>
+                  {teamMembers.map((assignee) => (
+                    <MenuItem key={assignee.id} value={assignee.id}>
+                      <Checkbox checked={selectedAssignees.includes(assignee.id)} />
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Avatar sx={{ width: 24, height: 24 }}>
+                          {assignee.name.charAt(0)}
+                        </Avatar>
+                        <ListItemText primary={assignee.name} />
+                      </Stack>
                     </MenuItem>
                   ))}
                 </Select>
