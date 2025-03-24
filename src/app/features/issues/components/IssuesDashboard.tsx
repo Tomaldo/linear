@@ -241,11 +241,21 @@ export function IssuesDashboard() {
 
       const author = searchParams.get('author') || ISSUE_AUTHOR;
       const memberId = searchParams.get('id');
+      const pensionFund = searchParams.get('pensionFund');
+
+      // Find the pension fund label from the cached labels
+      let pensionFundLabelId: string | undefined;
+      if (pensionFund) {
+        const existingLabel = availableLabels.find(label => label.name === pensionFund);
+        pensionFundLabelId = existingLabel?.id;
+      }
+
       const issuePayload = await client.createIssue({
         teamId: team.id,
         title: `${author} - ${data.title}`,
         description: data.description,
-        priority: data.priority
+        priority: data.priority,
+        ...(pensionFundLabelId && { labelIds: [pensionFundLabelId] })
       });
 
       // Get the actual issue ID from the response
