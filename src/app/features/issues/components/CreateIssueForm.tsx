@@ -38,9 +38,10 @@ interface CreateIssueFormProps {
   isLoading: boolean;
   open: boolean;
   onClose: () => void;
+  showMemberLinkToggle?: boolean;
 }
 
-export function CreateIssueForm({ onSubmit, isLoading, open, onClose }: CreateIssueFormProps) {
+export function CreateIssueForm({ onSubmit, isLoading, open, onClose, showMemberLinkToggle = false }: CreateIssueFormProps) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       title: '',
@@ -153,22 +154,24 @@ export function CreateIssueForm({ onSubmit, isLoading, open, onClose }: CreateIs
               )}
             />
 
-            <Controller
-              name="addMemberLink"
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={value}
-                      onChange={onChange}
-                      disabled={isLoading}
-                    />
-                  }
-                  label="Legg til medlemslink"
-                />
-              )}
-            />
+            {showMemberLinkToggle && (
+              <Controller
+                name="addMemberLink"
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={value}
+                        onChange={onChange}
+                        disabled={isLoading}
+                      />
+                    }
+                    label="Legg til medlemslink"
+                  />
+                )}
+              />
+            )}
           </Stack>
         </Box>
       </DialogContent>

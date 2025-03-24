@@ -241,6 +241,7 @@ export function IssuesDashboard() {
 
       const author = searchParams.get('author') || ISSUE_AUTHOR;
       const memberId = searchParams.get('id');
+      const ticketId = searchParams.get('ticketId');
       const pensionFund = searchParams.get('pensionFund');
 
       // Find the pension fund label from the cached labels
@@ -263,7 +264,9 @@ export function IssuesDashboard() {
       const issueId = issue ? issue.id : null;
       
       if (data.addMemberLink && issueId && memberId) {
-        const url = `https://saksbehandler.opensjon.no/members/${memberId}`;
+        const url = ticketId
+          ? `https://saksbehandler.opensjon.no/members/${memberId}/ticket/${ticketId}`
+          : `https://saksbehandler.opensjon.no/members/${memberId}`;
         try {
           await client.createAttachment({
             issueId,
@@ -708,6 +711,7 @@ export function IssuesDashboard() {
         isLoading={isCreating}
         open={isCreateDialogOpen}
         onClose={handleCloseCreateDialog}
+        showMemberLinkToggle={!!searchParams.get('id')}
       />
     </Box>
   );
