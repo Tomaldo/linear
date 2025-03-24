@@ -31,6 +31,7 @@ export const UI_TEXTS = {
     title: 'Saker',
     showMore: 'Vis mer',
     noIssues: 'Ingen saker funnet',
+    unassigned: 'Ikke tildelt',
     form: {
       title: 'Tittel',
       description: 'Beskrivelse',

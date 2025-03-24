@@ -15,6 +15,8 @@ export interface IssueWithState extends Pick<Issue, 'id'> {
   priority?: IssuePriority;
   createdAt: string;
   comments?: IssueComment[];
+  assigneeId: string | null;
+  assigneeName: string | null;
 }
 
 export enum IssuePriority {

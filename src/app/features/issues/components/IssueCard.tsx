@@ -16,10 +16,12 @@ import {
   useTheme,
   IconButton,
   Tooltip,
-  Link as MuiLink
+  Link as MuiLink,
+  Avatar
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import LinkIcon from '@mui/icons-material/Link';
+import PersonIcon from '@mui/icons-material/Person';
 import { IssueWithState, IssuePriority } from '@/app/features/issues/types';
 import { UI_TEXTS, STATUS_TRANSLATIONS, PRIORITY_LABELS } from '../constants/translations';
 import { getPriorityColor, getStatusColor } from '../utils/colors';
@@ -49,15 +51,21 @@ const StyledChip = styled(Chip)<StyledChipProps>(({ theme, bgcolor }) => ({
 }));
 
 interface IssueCardProps {
-  issue: IssueWithState & { memberLink?: string | null };
+  issue: IssueWithState & { 
+    memberLink?: string | null;
+    assigneeId?: string | null;
+    assigneeName?: string | null;
+  };
   isLoading?: boolean;
   onStatusChange?: (issueId: string, newStatusId: string) => Promise<void>;
   onPriorityChange?: (issueId: string, newPriority: number) => Promise<void>;
   onLabelToggle?: (issueId: string, labelId: string, isAdding: boolean) => Promise<void>;
   onEdit?: (issueId: string, title: string, description: string) => Promise<void>;
   onAddComment?: (issueId: string, body: string) => Promise<void>;
+  onAssigneeChange?: (issueId: string, assigneeId: string | null) => Promise<void>;
   availableStatuses?: Array<{ id: string; name: string }>;
   availableLabels?: Array<{ id: string; name: string; color: string }>;
+  availableAssignees?: Array<{ id: string; name: string; email: string }>;
 }
 
 const IssueCardSkeleton = () => (
@@ -81,15 +89,19 @@ export function IssueCard({
   onLabelToggle,
   onEdit,
   onAddComment,
+  onAssigneeChange,
   availableStatuses,
-  availableLabels 
+  availableLabels,
+  availableAssignees 
 }: IssueCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null);
   const [priorityAnchorEl, setPriorityAnchorEl] = useState<null | HTMLElement>(null);
   const [labelAnchorEl, setLabelAnchorEl] = useState<null | HTMLElement>(null);
+  const [assigneeAnchorEl, setAssigneeAnchorEl] = useState<null | HTMLElement>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
+  const [isAssigneeUpdating, setIsAssigneeUpdating] = useState(false);
   const [updatingLabelIds, setUpdatingLabelIds] = useState<Set<string>>(new Set());
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -122,6 +134,14 @@ export function IssueCard({
 
   const handleLabelClose = () => {
     setLabelAnchorEl(null);
+  };
+
+  const handleAssigneeClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    setAssigneeAnchorEl(event.currentTarget);
+  };
+
+  const handleAssigneeClose = () => {
+    setAssigneeAnchorEl(null);
   };
 
   const handleStatusChange = async (newStatusId: string) => {
@@ -164,6 +184,18 @@ export function IssueCard({
           next.delete(labelId);
           return next;
         });
+      }
+    }
+  };
+
+  const handleAssigneeChange = async (newAssigneeId: string | null) => {
+    if (onAssigneeChange) {
+      setIsAssigneeUpdating(true);
+      try {
+        await onAssigneeChange(issue.id, newAssigneeId);
+      } finally {
+        setIsAssigneeUpdating(false);
+        handleAssigneeClose();
       }
     }
   };
@@ -347,6 +379,57 @@ export function IssueCard({
                     </Menu>
                   </>
                 )}
+
+                <Box>
+                  <StyledChip
+                    icon={<PersonIcon />}
+                    label={
+                      isAssigneeUpdating ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CircularProgress size={16} />
+                          {issue.assigneeName || UI_TEXTS.issues.unassigned}
+                        </Box>
+                      ) : (
+                        issue.assigneeName || UI_TEXTS.issues.unassigned
+                      )
+                    }
+                    size="small"
+                    bgcolor={theme.palette.primary.main}
+                    onClick={handleAssigneeClick}
+                    aria-haspopup="true"
+                    aria-expanded={Boolean(assigneeAnchorEl)}
+                    aria-label="Assign issue"
+                  />
+                  <Menu
+                    anchorEl={assigneeAnchorEl}
+                    open={Boolean(assigneeAnchorEl)}
+                    onClose={handleAssigneeClose}
+                  >
+                    <MenuItem onClick={() => handleAssigneeChange(null)}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <PersonIcon />
+                        <Typography>{UI_TEXTS.issues.unassigned}</Typography>
+                      </Stack>
+                    </MenuItem>
+                    {availableAssignees?.map((assignee) => (
+                      <MenuItem
+                        key={assignee.id}
+                        onClick={() => handleAssigneeChange(assignee.id)}
+                        selected={assignee.id === issue.assigneeId}
+                      >
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar
+                            sx={{ width: 24, height: 24 }}
+                            alt={assignee.name}
+                          >
+                            {assignee.name.charAt(0)}
+                          </Avatar>
+                          <Typography>{assignee.name}</Typography>
+                        </Stack>
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
 
                 <Box>
                   <StyledChip

@@ -26,7 +26,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { CreateIssueForm } from './CreateIssueForm';
 import { IssueCard } from './IssueCard';
-import { LinearClient, Team, Issue, WorkflowState, Connection, IssuePayload } from '@linear/sdk';
+import { LinearClient, Team, Issue, WorkflowState, Connection, IssuePayload, User } from '@linear/sdk';
 import { IssueWithState, IssuePriority, IssueLabel } from '@/app/features/issues/types';
 import { ISSUE_AUTHOR } from '../constants';
 import { UI_TEXTS, STATUS_TRANSLATIONS } from '../constants/translations';
@@ -47,6 +47,7 @@ export function IssuesDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string }>>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; name: string; email: string }>>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
@@ -119,6 +120,15 @@ export function IssuesDashboard() {
         throw new Error('Team configuration error: No team found in Linear.');
       }
 
+      // Fetch team members
+      const membersResponse = await team.members();
+      const members = (membersResponse as Connection<User>).nodes;
+      setTeamMembers(members.map(member => ({
+        id: member.id,
+        name: member.name || member.email,
+        email: member.email
+      })));
+
       const statesResponse = await team.states();
       const states = (statesResponse as Connection<WorkflowState>).nodes;
       setStatuses(states.map((state: WorkflowState) => ({ 
@@ -145,6 +155,7 @@ export function IssuesDashboard() {
             name: label.name,
             color: label.color
           }));
+          const assignee = await issue.assignee;
           const commentsResponse = await issue.comments();
           const comments = await Promise.all(commentsResponse.nodes.map(async comment => {
             const user = await comment.user;
@@ -174,6 +185,8 @@ export function IssuesDashboard() {
             labels,
             priority: issue.priority as IssuePriority,
             createdAt: issue.createdAt.toISOString(),
+            assigneeId: assignee?.id ?? null,
+            assigneeName: assignee?.name ?? assignee?.email ?? null,
             comments,
             memberLink
           };
@@ -314,6 +327,32 @@ export function IssuesDashboard() {
     } catch (error) {
       console.error('Error updating issue priority:', error);
       setError('Failed to update issue priority. Please try again.');
+    }
+  };
+
+  const handleAssigneeChange = async (issueId: string, assigneeId: string | null) => {
+    try {
+      const client = new LinearClient({ apiKey: process.env.NEXT_PUBLIC_LINEAR_API_KEY });
+      const issue = await client.issue(issueId);
+      await issue.update({ assigneeId });
+      
+      // Update local state
+      setIssues(prevIssues => 
+        prevIssues.map(prevIssue => {
+          if (prevIssue.id === issueId) {
+            const newAssignee = teamMembers.find(m => m.id === assigneeId);
+            return {
+              ...prevIssue,
+              assigneeId,
+              assigneeName: newAssignee?.name ?? null
+            };
+          }
+          return prevIssue;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating issue assignee:', error);
+      setError('Failed to update issue assignee. Please try again.');
     }
   };
 
@@ -558,8 +597,10 @@ export function IssuesDashboard() {
                     onLabelToggle={handleLabelToggle}
                     onEdit={handleEditIssue}
                     onAddComment={handleAddComment}
+                    onAssigneeChange={handleAssigneeChange}
                     availableStatuses={statuses}
                     availableLabels={availableLabels}
+                    availableAssignees={teamMembers}
                   />
                 </Grid>
               ))}
