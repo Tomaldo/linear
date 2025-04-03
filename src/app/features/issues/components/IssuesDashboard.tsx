@@ -310,6 +310,48 @@ export function IssuesDashboard() {
         issueId,
         body
       });
+
+      // Get the current user's email from query params
+      const currentUserEmail = searchParams.get('author') || ISSUE_AUTHOR;
+
+      // Find the issue that was commented on
+      const issue = issues.find(i => i.id === issueId);
+      if (!issue) throw new Error('Issue not found');
+
+      // Extract creator email from title (format: "email@domain.com - Title")
+      const creatorEmail = issue.title.split(' - ')[0];
+
+      // Determine recipient email (the one who is not the current commenter)
+      let recipientEmail = creatorEmail;
+      
+      // If current user is the creator, and there's an assignee, notify the assignee instead
+      if (currentUserEmail === creatorEmail && issue.assigneeName) {
+        // Assuming assigneeName is the email (based on the code that sets it)
+        recipientEmail = issue.assigneeName;
+      } else if (currentUserEmail === issue.assigneeName) {
+        // If current user is the assignee, notify the creator
+        recipientEmail = creatorEmail;
+      }
+
+      // Only send notification if recipient is different from commenter
+      if (recipientEmail && recipientEmail !== currentUserEmail) {
+        try {
+          await fetch('https://prod-21.westeurope.logic.azure.com:443/workflows/4ea9aa4a2d874944a8e6ef381330d500/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=52rZ4S5MWz0-YxJkEGif38ttOxuq09bjT0fvQzGC7Yk', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              epost: recipientEmail,
+              sak: issue.title
+            })
+          });
+        } catch (notificationError) {
+          console.error('Failed to send notification:', notificationError);
+          // Don't throw the error since the comment was still created successfully
+        }
+      }
+
       await fetchIssues();
     } catch (err) {
       const errorMessage = err instanceof Error 
