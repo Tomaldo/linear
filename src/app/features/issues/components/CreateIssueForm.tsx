@@ -47,7 +47,7 @@ export function CreateIssueForm({ onSubmit, isLoading, open, onClose, showMember
       title: '',
       description: '',
       priority: IssuePriority.NoPriority,
-      addMemberLink: false
+      addMemberLink: showMemberLinkToggle
     }
   });
 
